@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     'div',
     {style: {width: '100%', height: '100%', display: 'flex', background: '#0D0D0D', color: '#EDEDED', fontFamily: 'Kr'}},
     h(
-      {display: 'flex', flexDirection: 'column', padding: '64px 0 0 80px', width: 700},
+      {display: 'flex', flexDirection: 'column', padding: '52px 0 0 80px', width: 700},
       h({fontFamily: 'Mono', fontSize: 22, letterSpacing: 4, color: '#5C5C5C'}, 'BONE NAME TYPING'),
       h({fontSize: 40, fontWeight: 900, marginTop: 10, color: '#FFFFFF'}, '뼈이름으로 타자연습'),
       h({fontSize: 34, fontWeight: 500, marginTop: 44, color: '#9A9A9A'}, `${s.nickname}님의 기록 · ${MODE_KO[s.mode]}`),
@@ -56,7 +56,7 @@ export async function GET(req: Request) {
           ),
         ),
       ),
-      h({fontSize: 26, fontWeight: 500, marginTop: 30, color: '#EDEDED'}, '이 기록에 도전해 보세요 · bone-typing.vercel.app'),
+      h({fontSize: 26, fontWeight: 500, marginTop: 24, color: '#EDEDED'}, '이 기록에 도전해 보세요 · bone-typing.vercel.app'),
     ),
     React.createElement('img', {src: `${u.origin}/og-bone.png`, width: 500, height: 562, style: {marginTop: 34}}),
   );
