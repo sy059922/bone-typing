@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {BoneStage, preloadModels} from './components/BoneStage';
 import {BONES} from './data/bones';
 import {Game, type Kind, type Result} from './Game';
+import {ResultModal} from './components/ResultModal';
 import {SoundToggle} from './components/SoundToggle';
 import {isShared, submitScore, topScores, type Mode, type Score} from './lib/ranking';
 import {initSound, startBgm} from './lib/sound';
@@ -62,7 +63,7 @@ const Board: React.FC<{mode: Mode; me?: string; refresh: number}> = ({mode, me, 
 const IDLE = [{key: 'title-spine', model: BONES.find((b) => b.id === 'spine')!.model, slot: 'cur' as const}];
 
 export default function App() {
-  const [screen, setScreen] = useState<'title' | 'game' | 'result'>('title');
+  const [screen, setScreen] = useState<'title' | 'game'>('title');
   const [lang, setLang] = useState<Lang>('ko');
   const [kind, setKind] = useState<Kind>('word');
   const [nick, setNick] = useState(readNick);
@@ -70,6 +71,8 @@ export default function App() {
   const [saved, setSaved] = useState<'idle' | 'saving' | 'ok' | 'fail'>('idle');
   const [refresh, setRefresh] = useState(0);
   const [round, setRound] = useState(0);
+  const [rank, setRank] = useState<number | null>(null);
+  const [best, setBest] = useState(false);
   const mode = `${lang}-${kind}` as Mode;
 
   useEffect(() => preloadModels(['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot']), []);
@@ -85,17 +88,24 @@ export default function App() {
       /* 무시 */
     }
     setNick(n);
+    setResult(null);
+    setRank(null);
+    setBest(false);
     setRound((r) => r + 1);
     setScreen('game');
   };
 
+  // 끝나면 게임 화면 위에 결과 팝업 (확인을 눌러야 메인으로)
   const done = async (r: Result) => {
     setResult(r);
-    setScreen('result');
     setSaved('saving');
     try {
       await submitScore({nickname: nick, ...r});
       setSaved('ok');
+      const top = await topScores(r.mode, 500);
+      const i = top.findIndex((x) => x.nickname.toLowerCase() === nick.toLowerCase());
+      setRank(i >= 0 ? i + 1 : null);
+      setBest(i >= 0 && top[i].score === r.score);
     } catch {
       setSaved('fail');
     }
@@ -105,6 +115,24 @@ export default function App() {
   // 개발용: ?bone=<id> 로 뼈 하나만 띄워 3D 확인
   const peek = new URLSearchParams(location.search).get('bone');
   const peekBone = peek ? BONES.find((b) => b.id === peek) : null;
+  // 개발용: ?og 로 링크 미리보기 그림(1200×630) 화면
+  if (new URLSearchParams(location.search).has('og'))
+    return (
+      <div className="og">
+        <div className="og-text">
+          <div className="logo">
+            뼈이름으로
+            <br />
+            <span className="logo-king">타자연습</span>
+            <span className="logo-sub">BONE NAME TYPING</span>
+          </div>
+          <div className="og-desc">척추 · 팔 · 다리 뼈 48개를 3D로 보며 타자 연습 · 랭킹 도전</div>
+        </div>
+        <div className="og-stage">
+          <BoneStage items={IDLE} bad={false} bursts={[]} />
+        </div>
+      </div>
+    );
   if (peekBone)
     return (
       <div style={{height: '100%'}}>
@@ -112,7 +140,26 @@ export default function App() {
       </div>
     );
 
-  if (screen === 'game') return <Game key={round} lang={lang} kind={kind} onDone={done} onQuit={() => setScreen('title')} />;
+  if (screen === 'game')
+    return (
+      <>
+        <Game key={round} lang={lang} kind={kind} onDone={done} onQuit={() => setScreen('title')} />
+        {result ? (
+          <ResultModal
+            result={result}
+            nick={nick}
+            saved={saved}
+            rank={rank}
+            best={best}
+            onOk={() => {
+              setResult(null);
+              setScreen('title');
+            }}
+            onAgain={start}
+          />
+        ) : null}
+      </>
+    );
 
   return (
     <div
@@ -164,36 +211,6 @@ export default function App() {
             </button>
             <SoundToggle />
             <Board mode={mode} me={nick} refresh={refresh} />
-          </>
-        ) : result ? (
-          <>
-            <div className="result-head">{MODE_LABEL[result.mode]} 결과</div>
-            <div className="result-score">{result.score}</div>
-            <div className="result-sub">점수 = 타수 × 정확도²</div>
-            <div className="result-grid">
-              <div>
-                <b>{result.cpm}</b>
-                <span>{lang === 'ko' ? '타수' : 'CPM'}</span>
-              </div>
-              <div>
-                <b>{result.accuracy.toFixed(1)}%</b>
-                <span>정확도</span>
-              </div>
-              <div>
-                <b>{(result.duration_ms / 1000).toFixed(1)}s</b>
-                <span>시간</span>
-              </div>
-            </div>
-            <div className="saved">{saved === 'saving' ? '랭킹에 올리는 중…' : saved === 'ok' ? '랭킹에 올렸어요' : saved === 'fail' ? '랭킹 저장 실패' : ''}</div>
-            <div className="row-btns">
-              <button className="start" onClick={start}>
-                다시 하기
-              </button>
-              <button className="ghost-btn" onClick={() => setScreen('title')}>
-                처음으로
-              </button>
-            </div>
-            <Board mode={result.mode} me={nick} refresh={refresh} />
           </>
         ) : null}
         <div className="credit">

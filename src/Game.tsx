@@ -30,6 +30,8 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
   const [pressed, setPressed] = useState<Set<string>>(new Set());
   const [bad, setBad] = useState(false);
   const [ended, setEnded] = useState(false);
+  const endedRef = useRef(false);
+  endedRef.current = ended;
   const [bursts, setBursts] = useState<number[]>([]);
   const [combo, setCombo] = useState(0);
   const [latinWarn, setLatinWarn] = useState(false);
@@ -69,7 +71,7 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
         if (e.code === 'Backspace') sfxBackspace();
         else if (/^(Key|Digit)/.test(e.code) || ['Space', 'Comma', 'Period', 'Quote', 'Minus', 'Slash', 'Semicolon'].includes(e.code)) sfxKey(progress.current);
       }
-      if (document.activeElement !== input.current) focus();
+      if (!endedRef.current && document.activeElement !== input.current) focus();
     };
     const up = (e: KeyboardEvent) =>
       setPressed((p) => {
@@ -94,6 +96,7 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
   }, []);
 
   const onChange = (v: string) => {
+    if (ended) return;
     if (!stats.current.start && v) stats.current.start = performance.now();
     // 한글 판인데 영문이 들어오면 한/영 안내
     setLatinWarn(lang === 'ko' && /[a-zA-Z]/.test(v));
@@ -149,6 +152,10 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
   }, [value, target, kind, lang, idx, queue, finish, flashBad, combo]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (ended) {
+      e.preventDefault();
+      return;
+    }
     // 낱말 모드의 Space 는 다 친 뒤에만 확정 (영어 이름 'Carpal bones' 처럼 띄어쓰기가 있는 낱말)
     const spaceSubmit = kind === 'word' && (e.key === ' ' || e.code === 'Space') && (value.trim() === target || !target.includes(' '));
     const isSubmit = e.key === 'Enter' || spaceSubmit;
