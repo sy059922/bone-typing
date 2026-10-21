@@ -509,6 +509,65 @@ button {
   color: var(--bad);
 }
 
+/* 세로가 짧은 노트북 화면 (1280×720 등) — 키보드·글씨를 줄여 뼈 무대 확보 */
+@media (max-height: 820px) {
+  .hud {
+    padding: 10px 24px 6px;
+  }
+  .line.word {
+    font-size: 56px;
+  }
+  .line.sentence {
+    font-size: 26px;
+  }
+  .kb {
+    margin: 6px 0 12px;
+    gap: 4px;
+  }
+  .kb-row {
+    gap: 4px;
+  }
+  .key {
+    height: 34px;
+    font-size: 13px;
+  }
+  .stage {
+    min-height: 200px;
+  }
+}
+
+.hint-touch {
+  display: none;
+}
+
+/* 폰·터치 기기: 실제 키보드가 없으니 모형 키보드는 숨기고 화면 키보드 자리를 비움 */
+@media (max-width: 640px), (pointer: coarse) and (max-width: 1024px) {
+  .kb {
+    display: none;
+  }
+  .hint-keys {
+    display: none;
+  }
+  .hint-touch {
+    display: inline;
+  }
+  .hud {
+    padding: 10px 14px 6px;
+  }
+  .hud-stats {
+    gap: 14px;
+  }
+  .hud .esc {
+    display: none;
+  }
+  .progress {
+    margin: 0 14px;
+  }
+  .game .line {
+    margin-bottom: 40vh;
+  }
+}
+
 @media (max-width: 860px) {
   .title {
     grid-template-columns: 1fr;

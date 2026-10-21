@@ -165,7 +165,7 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
     <div className="game" onClick={() => input.current?.focus()}>
       <div className="hud">
         <button className="ghost-btn" onClick={onQuit}>
-          그만하기 Esc
+          그만하기<span className="esc"> Esc</span>
         </button>
         <div className="hud-stats">
           <span>
@@ -239,7 +239,8 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
         />
       </div>
       <div className="hint">
-        {latinWarn ? <span className="warn">한/영 키를 눌러 한글 입력으로 바꿔 주세요</span> : kind === 'word' ? 'Space 또는 Enter 로 확정' : 'Enter 로 확정'}
+        {latinWarn ? <span className="warn">한/영 키를 눌러 한글 입력으로 바꿔 주세요</span> : <span className="hint-keys">{kind === 'word' ? 'Space 또는 Enter 로 확정' : 'Enter 로 확정'}</span>}
+        <span className="hint-touch">글자를 누르면 키보드가 열려요 · 확정은 띄어쓰기/엔터</span>
       </div>
 
       <Keyboard lang={lang} pressed={pressed} next={st.ok ? st.nextKey ?? (st.doneUnits === st.totalUnits ? [kind === 'word' ? 'Space' : 'Enter', false] : null) : ['Backspace', false]} flashBad={bad} />
