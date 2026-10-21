@@ -38,14 +38,14 @@ const Board: React.FC<{mode: Mode; me?: string; refresh: number}> = ({mode, me, 
   return (
     <div className="board">
       <div className="board-head">
-        🏆 랭킹 · {MODE_LABEL[mode]}
+        RANKING · {MODE_LABEL[mode]}
         <span className="board-scope">{isShared() ? '전체' : '이 기기'}</span>
       </div>
       {err ? <div className="board-empty">랭킹을 불러오지 못했어요</div> : null}
       {rows && rows.length === 0 ? <div className="board-empty">아직 기록이 없어요. 첫 1등을 노려 보세요!</div> : null}
       {rows?.map((r, i) => (
         <div key={`${r.nickname}-${i}`} className={`board-row ${me && r.nickname === me ? 'me' : ''}`}>
-          <span className="rank">{i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1}</span>
+          <span className="rank">{String(i + 1).padStart(2, '0')}</span>
           <span className="nick">{r.nickname}</span>
           <span className="score">{r.score}</span>
           <span className="meta">
@@ -119,9 +119,10 @@ export default function App() {
         {screen === 'title' ? (
           <>
             <div className="logo">
-              <span className="logo-bone">🦴</span> 뼈이름으로
+              뼈이름으로
               <br />
               <span className="logo-king">타자연습</span>
+              <span className="logo-sub">BONE NAME TYPING</span>
             </div>
             <div className="seg">
               <button className={lang === 'ko' ? 'on' : ''} onClick={() => setLang('ko')}>
@@ -148,7 +149,7 @@ export default function App() {
               onKeyDown={(e) => e.key === 'Enter' && start()}
             />
             <button className="start" disabled={!nick.trim()} onClick={start}>
-              시작하기 ▶
+              시작하기
             </button>
             <Board mode={mode} me={nick} refresh={refresh} />
           </>
@@ -171,7 +172,7 @@ export default function App() {
                 <span>시간</span>
               </div>
             </div>
-            <div className="saved">{saved === 'saving' ? '랭킹에 올리는 중…' : saved === 'ok' ? '✅ 랭킹에 올렸어요' : saved === 'fail' ? '⚠️ 랭킹 저장 실패' : ''}</div>
+            <div className="saved">{saved === 'saving' ? '랭킹에 올리는 중…' : saved === 'ok' ? '랭킹에 올렸어요' : saved === 'fail' ? '랭킹 저장 실패' : ''}</div>
             <div className="row-btns">
               <button className="start" onClick={start}>
                 다시 하기

@@ -1,4 +1,4 @@
-import {Sparkles, useGLTF} from '@react-three/drei';
+import {ContactShadows, useGLTF} from '@react-three/drei';
 import {Canvas, useFrame} from '@react-three/fiber';
 import React, {Component, Suspense, useMemo, useRef} from 'react';
 import * as THREE from 'three';
@@ -48,9 +48,9 @@ const splitHip = (m: THREE.Mesh) => {
   return out;
 };
 
-const BONE = new THREE.MeshStandardMaterial({color: '#F4EBD8', roughness: 0.5, metalness: 0.04, emissive: '#FFD84D', emissiveIntensity: 0.05});
-const GHOST = new THREE.MeshStandardMaterial({color: '#B4C3FF', roughness: 0.6, emissive: '#3D5BDB', emissiveIntensity: 0.35, transparent: true, opacity: 0.2, depthWrite: false});
-const BAD = new THREE.MeshStandardMaterial({color: '#FF6B6B', roughness: 0.5, emissive: '#FF2E2E', emissiveIntensity: 0.35});
+const BONE = new THREE.MeshStandardMaterial({color: '#F7F5F0', roughness: 0.55, metalness: 0, emissive: '#FFFFFF', emissiveIntensity: 0.02});
+const GHOST = new THREE.MeshStandardMaterial({color: '#8C8C8C', roughness: 0.8, transparent: true, opacity: 0.16, depthWrite: false});
+const BAD = new THREE.MeshStandardMaterial({color: '#E5484D', roughness: 0.55, emissive: '#E5484D', emissiveIntensity: 0.25});
 
 export type Phase = 'enter' | 'idle' | 'exit';
 
@@ -143,7 +143,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean}> = ({model, bad}) => {
     if (m.isMesh && m.userData.hl) m.material = bad ? BAD : BONE;
   });
   useFrame((st) => {
-    BONE.emissiveIntensity = 0.05 + 0.05 * Math.sin(st.clock.elapsedTime * 2.4);
+    BONE.emissiveIntensity = 0.02 + 0.015 * Math.sin(st.clock.elapsedTime * 2.4);
   });
   if (built.count === 0) return <Placeholder />;
   return <primitive object={built.wrap} />;
@@ -152,7 +152,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean}> = ({model, bad}) => {
 const Placeholder: React.FC = () => (
   <mesh>
     <capsuleGeometry args={[0.35, 2.2, 8, 24]} />
-    <meshStandardMaterial color="#F4EBD8" roughness={0.5} />
+    <meshStandardMaterial color="#F7F5F0" roughness={0.55} />
   </mesh>
 );
 
@@ -190,7 +190,7 @@ const Burst: React.FC<{at: number}> = ({at}) => {
   });
   return (
     <points ref={pts} geometry={geo} key={at}>
-      <pointsMaterial color="#FFD84D" size={0.09} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+      <pointsMaterial color="#FFFFFF" size={0.06} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
     </points>
   );
 };
@@ -199,13 +199,14 @@ export type StageItem = {key: string; model: ModelRef; phase: Phase};
 
 export const BoneStage: React.FC<{items: StageItem[]; bad: boolean; bursts: number[]}> = ({items, bad, bursts}) => (
   <Canvas camera={{position: [0, 0.4, 7], fov: 38}} dpr={[1, 2]} gl={{antialias: true}}>
-    <color attach="background" args={['#070A18']} />
-    <fog attach="fog" args={['#070A18', 9, 18]} />
-    <hemisphereLight args={['#C9D4FF', '#1B1340', 0.7]} />
-    <directionalLight position={[3, 5, 6]} intensity={2.2} color="#FFF6E8" />
-    <pointLight position={[-5, 1, 2]} intensity={40} color="#6C4BFF" />
-    <pointLight position={[5, -2, 3]} intensity={30} color="#3D6BFF" />
-    <Sparkles count={70} scale={[12, 6, 4]} size={2.2} speed={0.3} color="#A9D3F2" opacity={0.5} />
+    <color attach="background" args={['#0D0D0D']} />
+    <fog attach="fog" args={['#0D0D0D', 9, 18]} />
+    {/* 사진 스튜디오 조명: 위 앞 키라이트 + 옆 보조 + 뒤 테두리 빛 */}
+    <hemisphereLight args={['#FFFFFF', '#1A1A1A', 0.55]} />
+    <directionalLight position={[3, 6, 5]} intensity={2.4} color="#FFFFFF" />
+    <directionalLight position={[-5, 1, 2]} intensity={0.6} color="#FFFFFF" />
+    <directionalLight position={[0, 3, -6]} intensity={1.6} color="#FFFFFF" />
+    <ContactShadows position={[0, -1.75, 0]} opacity={0.55} scale={10} blur={2.6} far={4} color="#000000" />
     {items.map((it) => (
       <Mover key={it.key} phase={it.phase} bad={bad && it.phase !== 'exit' ? 1 : 0}>
         <Boundary resetKey={it.key}>

@@ -165,7 +165,7 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
     <div className="game" onClick={() => input.current?.focus()}>
       <div className="hud">
         <button className="ghost-btn" onClick={onQuit}>
-          ← 그만
+          그만하기 Esc
         </button>
         <div className="hud-stats">
           <span>
@@ -179,7 +179,11 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
           </span>
         </div>
         <div className={`combo ${combo >= 2 ? 'on' : ''}`} key={combo}>
-          {combo >= 2 ? `🔥 ${combo} 콤보` : ''}
+          {combo >= 2 ? (
+            <>
+              COMBO<b>{combo}</b>
+            </>
+          ) : null}
         </div>
       </div>
       <div className="progress">
@@ -235,7 +239,7 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
         />
       </div>
       <div className="hint">
-        {latinWarn ? <span className="warn">⌨️ 한/영 키를 눌러 한글 입력으로 바꿔 주세요</span> : kind === 'word' ? 'Space 또는 Enter 로 확정' : 'Enter 로 확정'}
+        {latinWarn ? <span className="warn">한/영 키를 눌러 한글 입력으로 바꿔 주세요</span> : kind === 'word' ? 'Space 또는 Enter 로 확정' : 'Enter 로 확정'}
       </div>
 
       <Keyboard lang={lang} pressed={pressed} next={st.ok ? st.nextKey ?? (st.doneUnits === st.totalUnits ? [kind === 'word' ? 'Space' : 'Enter', false] : null) : ['Backspace', false]} flashBad={bad} />
