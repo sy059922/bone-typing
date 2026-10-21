@@ -3,7 +3,6 @@ import React from 'react';
 import {getScore, MODE_KO} from './_score.js';
 
 // 공유 링크 썸네일 (1200×630) — 그 기록의 닉네임·점수·타수·정확도·순위를 그 자리에서 그림
-export const config = {runtime: 'edge'};
 
 // 필요한 글자만 담은 글꼴을 Google Fonts 에서 받아 옴 (한글 전체 글꼴은 너무 커서)
 async function font(family: string, weight: number, text: string): Promise<ArrayBuffer> {
@@ -17,7 +16,8 @@ async function font(family: string, weight: number, text: string): Promise<Array
   return (await fetch(src)).arrayBuffer();
 }
 
-export default async function handler(req: Request) {
+// Node 런타임 (웹 표준 Request/Response 처리기) — @vercel/og 1.x 는 엣지에서 안 됨
+export async function GET(req: Request) {
   const u = new URL(req.url);
   const s = await getScore(u.searchParams.get('id'));
   if (!s) return Response.redirect(`${u.origin}/og.png`, 302);
