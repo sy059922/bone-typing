@@ -29,10 +29,12 @@ export const ResultModal: React.FC<{
   nick: string;
   saved: 'idle' | 'saving' | 'ok' | 'fail';
   rank: number | null;
+  scoreId: number | null;
+  failReason?: string;
   best: boolean;
   onOk: () => void;
   onAgain: () => void;
-}> = ({result, nick, saved, rank, best, onOk, onAgain}) => {
+}> = ({result, nick, saved, rank, scoreId, failReason, best, onOk, onAgain}) => {
   const [shown, setShown] = useState(0);
   const [toast, setToast] = useState('');
   const armed = useRef(false);
@@ -66,10 +68,10 @@ export const ResultModal: React.FC<{
     setTimeout(() => setToast(''), 3000);
   };
   const doSystem = async () => {
-    const r = await systemShare(result, nick, rank);
+    const r = await systemShare(result, nick, rank, scoreId);
     if (r === 'failed') say('공유창을 열 수 없어요. 결과 복사나 이미지 저장을 써 주세요.');
   };
-  const doCopy = async () => say((await copyResult(result, nick, rank)) ? '결과를 복사했어요. 카카오톡 대화창에 붙여 넣어 보세요.' : '복사가 막혀 있어요.');
+  const doCopy = async () => say((await copyResult(result, nick, rank, scoreId)) ? '결과를 복사했어요. 카카오톡 대화창에 붙여 넣어 보세요.' : '복사가 막혀 있어요.');
   const doSave = async () => {
     await downloadCard(result, nick, rank);
     say('결과 카드 이미지를 저장했어요.');
@@ -100,7 +102,7 @@ export const ResultModal: React.FC<{
           </div>
         </div>
         <div className="modal-rank">
-          {saved === 'saving' ? '랭킹에 올리는 중…' : saved === 'fail' ? '랭킹 저장에 실패했어요' : rank ? (
+          {saved === 'saving' ? '랭킹에 올리는 중…' : saved === 'fail' ? failReason || '랭킹 저장에 실패했어요' : rank ? (
             <>
               전체 <b>{rank}</b>위
             </>

@@ -746,3 +746,14 @@ button {
   color: var(--text);
   border-color: var(--text);
 }
+.vs {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--sub);
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.vs b {
+  color: var(--white);
+}

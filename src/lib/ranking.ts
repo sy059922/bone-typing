@@ -22,9 +22,10 @@ const readLocal = (): Score[] => {
 // 점수 = 타수 × 정확도² — 빨라도 오타가 많으면 손해
 export const scoreOf = (cpm: number, accuracy: number) => Math.round(cpm * Math.pow(accuracy / 100, 2));
 
-export async function submitScore(s: Score): Promise<void> {
+// 저장된 기록 번호를 돌려줌 (공유 링크 /r/<id> 용). 이 기기 저장이면 null
+export async function submitScore(s: Score): Promise<number | null> {
   if (sb) {
-    const {error} = await sb.rpc('submit_score', {
+    const {data, error} = await sb.rpc('submit_score', {
       p_nickname: s.nickname,
       p_mode: s.mode,
       p_cpm: s.cpm,
@@ -33,7 +34,7 @@ export async function submitScore(s: Score): Promise<void> {
       p_duration_ms: s.duration_ms,
     });
     if (error) throw error;
-    return;
+    return Number(data);
   }
   try {
     const all = [...readLocal(), {...s, created_at: new Date().toISOString()}];
@@ -41,6 +42,15 @@ export async function submitScore(s: Score): Promise<void> {
   } catch {
     /* 저장 불가 브라우저 — 무시 */
   }
+  return null;
+}
+
+// 공유받은 기록 하나 (도전 문구용)
+export async function getShared(id: number): Promise<(Score & {rank: number}) | null> {
+  if (!sb) return null;
+  const {data} = await sb.rpc('get_score', {p_id: id});
+  const row = (data as (Score & {rank: number})[] | null)?.[0];
+  return row ? {...row, accuracy: Number(row.accuracy), rank: Number(row.rank)} : null;
 }
 
 export async function topScores(mode: Mode, limit = 20): Promise<Score[]> {

@@ -9,8 +9,11 @@ const MODE_KO: Record<string, string> = {
   'en-sentence': '영어 문장',
 };
 
-export const shareText = (r: Result, nick: string, rank: number | null) =>
-  `🦴 뼈이름으로 타자연습\n${nick} · ${MODE_KO[r.mode]} ${r.score}점 (${r.cpm}타 · 정확도 ${r.accuracy.toFixed(1)}%)${rank ? ` · 전체 ${rank}위` : ''}\n나도 도전하기 👉 ${SITE}`;
+// 기록 번호가 있으면 그 기록 썸네일이 뜨는 공유 링크
+export const shareUrl = (id: number | null) => (id ? `${SITE}/r/${id}` : SITE);
+
+export const shareText = (r: Result, nick: string, rank: number | null, id: number | null = null) =>
+  `🦴 뼈이름으로 타자연습\n${nick} · ${MODE_KO[r.mode]} ${r.score}점 (${r.cpm}타 · 정확도 ${r.accuracy.toFixed(1)}%)${rank ? ` · 전체 ${rank}위` : ''}\n나도 도전하기 👉 ${shareUrl(id)}`;
 
 // 결과 카드 그림 (1080×1350, 인스타·카톡 공유용) — 게임과 같은 무채색
 export async function resultCard(r: Result, nick: string, rank: number | null): Promise<Blob> {
@@ -75,23 +78,19 @@ export async function resultCard(r: Result, nick: string, rank: number | null): 
 
 export const canSystemShare = () => typeof navigator.share === 'function';
 
-// 시스템 공유창 (폰: 카카오톡·인스타·메시지 … / 맥: 메시지·AirDrop …) — 카드 그림 + 글
-export async function systemShare(r: Result, nick: string, rank: number | null): Promise<'shared' | 'cancelled' | 'failed'> {
-  const text = shareText(r, nick, rank);
-  const nav = navigator as Navigator & {canShare?: (d: ShareData) => boolean};
+// 시스템 공유창 (폰: 카카오톡·인스타·메시지 … / 맥: 메시지·AirDrop …) — 링크를 보내면 받는 쪽에 내 기록 썸네일이 뜸
+export async function systemShare(r: Result, nick: string, rank: number | null, id: number | null): Promise<'shared' | 'cancelled' | 'failed'> {
   try {
-    const file = new File([await resultCard(r, nick, rank)], 'bone-typing-result.png', {type: 'image/png'});
-    if (nav.canShare?.({files: [file]})) await nav.share({files: [file], text, title: '뼈이름으로 타자연습'});
-    else await nav.share({text, title: '뼈이름으로 타자연습', url: SITE});
+    await navigator.share({title: `${nick}님 ${r.score}점 · 뼈이름으로 타자연습`, text: shareText(r, nick, rank, null).split('\n').slice(0, 2).join('\n'), url: shareUrl(id)});
     return 'shared';
   } catch (e) {
     return (e as DOMException).name === 'AbortError' ? 'cancelled' : 'failed';
   }
 }
 
-export async function copyResult(r: Result, nick: string, rank: number | null): Promise<boolean> {
+export async function copyResult(r: Result, nick: string, rank: number | null, id: number | null): Promise<boolean> {
   try {
-    await navigator.clipboard.writeText(shareText(r, nick, rank));
+    await navigator.clipboard.writeText(shareText(r, nick, rank, id));
     return true;
   } catch {
     return false;

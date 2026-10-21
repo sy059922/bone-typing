@@ -4,7 +4,7 @@ import {BONES} from './data/bones';
 import {Game, type Kind, type Result} from './Game';
 import {ResultModal} from './components/ResultModal';
 import {SoundToggle} from './components/SoundToggle';
-import {isShared, submitScore, topScores, type Mode, type Score} from './lib/ranking';
+import {getShared, isShared, submitScore, topScores, type Mode, type Score} from './lib/ranking';
 import {initSound, startBgm} from './lib/sound';
 import type {Lang} from './lib/typing';
 
@@ -73,6 +73,21 @@ export default function App() {
   const [round, setRound] = useState(0);
   const [rank, setRank] = useState<number | null>(null);
   const [best, setBest] = useState(false);
+  const [scoreId, setScoreId] = useState<number | null>(null);
+  const [failReason, setFailReason] = useState('');
+  // 공유 링크로 들어온 경우: 그 기록에 도전하라는 문구
+  const [vs, setVs] = useState<(Score & {rank: number}) | null>(null);
+  useEffect(() => {
+    const id = Number(new URLSearchParams(location.search).get('vs'));
+    if (!id) return;
+    getShared(id).then((s) => {
+      if (!s) return;
+      setVs(s);
+      const [l, k] = s.mode.split('-') as [Lang, Kind];
+      setLang(l);
+      setKind(k);
+    });
+  }, []);
   const mode = `${lang}-${kind}` as Mode;
 
   useEffect(() => preloadModels(['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot']), []);
@@ -91,6 +106,8 @@ export default function App() {
     setResult(null);
     setRank(null);
     setBest(false);
+    setScoreId(null);
+    setFailReason('');
     setRound((r) => r + 1);
     setScreen('game');
   };
@@ -100,13 +117,16 @@ export default function App() {
     setResult(r);
     setSaved('saving');
     try {
-      await submitScore({nickname: nick, ...r});
+      setScoreId(await submitScore({nickname: nick, ...r}));
       setSaved('ok');
       const top = await topScores(r.mode, 500);
       const i = top.findIndex((x) => x.nickname.toLowerCase() === nick.toLowerCase());
       setRank(i >= 0 ? i + 1 : null);
       setBest(i >= 0 && top[i].score === r.score);
-    } catch {
+    } catch (e) {
+      const code = (e as {code?: string; message?: string}).code;
+      const msg = (e as {message?: string}).message ?? '';
+      setFailReason(code === '23514' ? '기록이 비정상적으로 빨라 랭킹에 올리지 않았어요' : msg.includes('too many') ? '잠시 뒤에 다시 올려 주세요 (1분에 5번까지)' : '');
       setSaved('fail');
     }
     setRefresh((x) => x + 1);
@@ -150,6 +170,8 @@ export default function App() {
             nick={nick}
             saved={saved}
             rank={rank}
+            scoreId={scoreId}
+            failReason={failReason}
             best={best}
             onOk={() => {
               setResult(null);
@@ -182,6 +204,11 @@ export default function App() {
               <span className="logo-king">타자연습</span>
               <span className="logo-sub">BONE NAME TYPING</span>
             </div>
+            {vs ? (
+              <div className="vs">
+                <b>{vs.nickname}</b>님의 <b>{vs.score}점</b>({MODE_LABEL[vs.mode]} · 전체 {vs.rank}위)에 도전해 보세요
+              </div>
+            ) : null}
             <div className="seg">
               <button className={lang === 'ko' ? 'on' : ''} onClick={() => setLang('ko')}>
                 한글
