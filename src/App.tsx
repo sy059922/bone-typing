@@ -2,7 +2,9 @@ import {useEffect, useState} from 'react';
 import {BoneStage, preloadModels} from './components/BoneStage';
 import {BONES} from './data/bones';
 import {Game, type Kind, type Result} from './Game';
+import {SoundToggle} from './components/SoundToggle';
 import {isShared, submitScore, topScores, type Mode, type Score} from './lib/ranking';
+import {initSound, startBgm} from './lib/sound';
 import type {Lang} from './lib/typing';
 
 const NICK = 'bone-typing:nick';
@@ -57,7 +59,7 @@ const Board: React.FC<{mode: Mode; me?: string; refresh: number}> = ({mode, me, 
   );
 };
 
-const IDLE = [{key: 'title-spine', model: BONES.find((b) => b.id === 'spine')!.model, phase: 'idle' as const}];
+const IDLE = [{key: 'title-spine', model: BONES.find((b) => b.id === 'spine')!.model, slot: 'cur' as const}];
 
 export default function App() {
   const [screen, setScreen] = useState<'title' | 'game' | 'result'>('title');
@@ -75,6 +77,8 @@ export default function App() {
   const start = () => {
     const n = nick.trim().slice(0, 12);
     if (!n) return;
+    initSound();
+    startBgm();
     try {
       localStorage.setItem(NICK, n);
     } catch {
@@ -104,14 +108,21 @@ export default function App() {
   if (peekBone)
     return (
       <div style={{height: '100%'}}>
-        <BoneStage items={[{key: peekBone.id, model: peekBone.model, phase: 'idle'}]} bad={false} bursts={[]} />
+        <BoneStage items={[{key: peekBone.id, model: peekBone.model, slot: 'cur'}]} bad={false} bursts={[]} />
       </div>
     );
 
   if (screen === 'game') return <Game key={round} lang={lang} kind={kind} onDone={done} onQuit={() => setScreen('title')} />;
 
   return (
-    <div className="title">
+    <div
+      className="title"
+      onPointerDown={() => {
+        // 브라우저는 사용자 동작 뒤에만 소리를 낼 수 있음 — 첫 클릭에 배경음 시작
+        initSound();
+        startBgm();
+      }}
+    >
       <div className="title-stage">
         <BoneStage items={IDLE} bad={false} bursts={[]} />
       </div>
@@ -151,6 +162,7 @@ export default function App() {
             <button className="start" disabled={!nick.trim()} onClick={start}>
               시작하기
             </button>
+            <SoundToggle />
             <Board mode={mode} me={nick} refresh={refresh} />
           </>
         ) : result ? (

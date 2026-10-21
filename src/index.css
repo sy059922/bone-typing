@@ -588,3 +588,29 @@ button {
     font-size: 13px;
   }
 }
+
+/* 소리 켜기/끄기 */
+.hud-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.sound-toggle {
+  display: flex;
+  gap: 6px;
+}
+.sound-toggle button {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--line2);
+  background: transparent;
+  color: var(--dim);
+}
+.sound-toggle button.on {
+  color: var(--text);
+  border-color: var(--sub);
+}

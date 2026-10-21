@@ -1,5 +1,5 @@
 import {ContactShadows, useGLTF} from '@react-three/drei';
-import {Canvas, useFrame} from '@react-three/fiber';
+import {Canvas, useFrame, useThree} from '@react-three/fiber';
 import React, {Component, Suspense, useMemo, useRef} from 'react';
 import * as THREE from 'three';
 import type {ModelRef} from '../data/bones';
@@ -52,43 +52,49 @@ const BONE = new THREE.MeshStandardMaterial({color: '#F7F5F0', roughness: 0.55, 
 const GHOST = new THREE.MeshStandardMaterial({color: '#8C8C8C', roughness: 0.8, transparent: true, opacity: 0.16, depthWrite: false});
 const BAD = new THREE.MeshStandardMaterial({color: '#E5484D', roughness: 0.55, emissive: '#E5484D', emissiveIntensity: 0.25});
 
-export type Phase = 'enter' | 'idle' | 'exit';
+// 자리: 왼쪽(방금 친 뼈) · 가운데(지금 칠 뼈) · 오른쪽(다음 뼈) · gone(왼쪽 밖으로 사라짐)
+export type Slot = 'prev' | 'cur' | 'next' | 'gone';
+const SIDE_SCALE = 0.5;
 
-const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-const backOut = (t: number) => {
-  const c1 = 1.4;
-  return 1 + (c1 + 1) * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-};
-
-// 날아와서 → 중앙에서 회전 → (맞히면) 왼쪽으로 튕겨 나감
-const Mover: React.FC<{phase: Phase; bad: number; children: React.ReactNode}> = ({phase, bad, children}) => {
+// 자리 사이를 부드럽게 미끄러지며 계속 회전. 새로 생긴 '다음 뼈'는 오른쪽 밖에서 들어옴
+const Mover: React.FC<{slot: Slot; bad: number; children: React.ReactNode}> = ({slot, bad, children}) => {
   const g = useRef<THREE.Group>(null!);
-  const t0 = useRef<number | null>(null);
-  const exitAt = useRef<number | null>(null);
+  const vw = useThree((st) => st.viewport.width);
+  const side = Math.min(4.3, vw * 0.36); // 좁은 화면이면 양옆을 안쪽으로
+  const started = useRef(false);
+  const spin = useRef(0);
   useFrame((st, dt) => {
-    const t = st.clock.elapsedTime;
-    if (t0.current === null) t0.current = t;
-    const e = Math.min(1, (t - t0.current) / 0.75);
-    let x = 7 * (1 - backOut(e));
-    let s = 0.6 + 0.4 * ease(e);
-    if (phase === 'exit') {
-      if (exitAt.current === null) exitAt.current = t;
-      const k = Math.min(1, (t - exitAt.current) / 0.45);
-      x = -9 * ease(k);
-      s = 1 + 0.4 * k;
-      g.current.rotation.y += dt * 14;
-    } else {
-      g.current.rotation.y += dt * (0.55 + 3.5 * (1 - e));
+    const tx = slot === 'prev' ? -side : slot === 'next' ? side : slot === 'gone' ? -side - 6 : 0;
+    const ts = slot === 'cur' ? 1 : SIDE_SCALE;
+    if (!started.current) {
+      started.current = true;
+      g.current.position.x = slot === 'cur' ? 7 : tx + 6;
+      g.current.scale.setScalar(ts * 0.6);
     }
-    const shake = bad > 0 ? Math.sin(t * 60) * 0.12 * bad : 0;
-    g.current.position.set(x + shake, Math.sin(t * 1.3) * 0.06, 0);
+    const k = 1 - Math.exp(-dt * 7);
+    const p = g.current.position;
+    p.x += (tx - p.x) * k;
+    const s = g.current.scale.x + (ts - g.current.scale.x) * k;
     g.current.scale.setScalar(s);
+    // 움직이는 중엔 빨리, 자리 잡으면 천천히 회전
+    const moving = Math.min(1, Math.abs(tx - p.x) / 3);
+    spin.current = 0.55 + 4 * moving;
+    g.current.rotation.y += dt * spin.current;
+    const t = st.clock.elapsedTime;
+    const shake = bad > 0 ? Math.sin(t * 60) * 0.12 * bad : 0;
+    g.current.position.set(p.x + shake * 0.2, Math.sin(t * 1.3 + (slot === 'cur' ? 0 : 1.5)) * 0.06, slot === 'cur' ? 0 : -0.6);
   });
   return <group ref={g}>{children}</group>;
 };
 
-const Model: React.FC<{model: ModelRef; bad: boolean}> = ({model, bad}) => {
+const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, bad, dim}) => {
   const {scene} = useGLTF(`/models/${model.file}.glb`, false, true);
+  const bone = useMemo(() => {
+    const m = BONE.clone();
+    m.transparent = true;
+    return m;
+  }, []);
+  const ghost = useMemo(() => GHOST.clone(), []);
   const built = useMemo(() => {
     const meshes = new Map<string, THREE.Mesh>();
     scene.updateMatrixWorld(true);
@@ -118,7 +124,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean}> = ({model, bad}) => {
       const m = meshes.get(n)!;
       if (done.has(m)) continue;
       done.add(m);
-      const c = new THREE.Mesh(m.geometry, hl.has(n) ? BONE : GHOST);
+      const c = new THREE.Mesh(m.geometry, hl.has(n) ? bone : ghost);
       c.userData.hl = hl.has(n);
       c.applyMatrix4(m.matrixWorld);
       c.renderOrder = hl.has(n) ? 1 : 0;
@@ -136,14 +142,19 @@ const Model: React.FC<{model: ModelRef; bad: boolean}> = ({model, bad}) => {
     const wrap = new THREE.Group();
     wrap.add(holder);
     return {wrap, count: done.size, hlCount: hl.size};
-  }, [scene, model]);
+  }, [scene, model, bone, ghost]);
 
   built.wrap.traverse((o) => {
     const m = o as THREE.Mesh;
-    if (m.isMesh && m.userData.hl) m.material = bad ? BAD : BONE;
+    if (m.isMesh && m.userData.hl) m.material = bad ? BAD : bone;
   });
-  useFrame((st) => {
-    BONE.emissiveIntensity = 0.02 + 0.015 * Math.sin(st.clock.elapsedTime * 2.4);
+  // 옆 자리(이전·다음)는 흐리게 — 불투명도를 천천히 바꿈
+  useFrame((st, dt) => {
+    const k = 1 - Math.exp(-dt * 6);
+    bone.opacity += ((dim ? 0.28 : 1) - bone.opacity) * k;
+    bone.depthWrite = bone.opacity > 0.95;
+    ghost.opacity += ((dim ? 0.05 : 0.16) - ghost.opacity) * k;
+    bone.emissiveIntensity = 0.02 + 0.015 * Math.sin(st.clock.elapsedTime * 2.4);
   });
   if (built.count === 0) return <Placeholder />;
   return <primitive object={built.wrap} />;
@@ -195,7 +206,7 @@ const Burst: React.FC<{at: number}> = ({at}) => {
   );
 };
 
-export type StageItem = {key: string; model: ModelRef; phase: Phase};
+export type StageItem = {key: string; model: ModelRef; slot: Slot};
 
 export const BoneStage: React.FC<{items: StageItem[]; bad: boolean; bursts: number[]}> = ({items, bad, bursts}) => (
   <Canvas camera={{position: [0, 0.4, 7], fov: 38}} dpr={[1, 2]} gl={{antialias: true}}>
@@ -208,10 +219,10 @@ export const BoneStage: React.FC<{items: StageItem[]; bad: boolean; bursts: numb
     <directionalLight position={[0, 3, -6]} intensity={1.6} color="#FFFFFF" />
     <ContactShadows position={[0, -1.75, 0]} opacity={0.55} scale={10} blur={2.6} far={4} color="#000000" />
     {items.map((it) => (
-      <Mover key={it.key} phase={it.phase} bad={bad && it.phase !== 'exit' ? 1 : 0}>
+      <Mover key={it.key} slot={it.slot} bad={bad && it.slot === 'cur' ? 1 : 0}>
         <Boundary resetKey={it.key}>
           <Suspense fallback={<Placeholder />}>
-            <Model model={it.model} bad={bad && it.phase !== 'exit'} />
+            <Model model={it.model} bad={bad && it.slot === 'cur'} dim={it.slot !== 'cur'} />
           </Suspense>
         </Boundary>
       </Mover>

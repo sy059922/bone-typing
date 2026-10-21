@@ -3,7 +3,9 @@ import {BoneStage, type StageItem} from './components/BoneStage';
 import {Keyboard} from './components/Keyboard';
 import {BONES, type Bone} from './data/bones';
 import {scoreOf, type Mode} from './lib/ranking';
+import {sfxBackspace, sfxBad, sfxFinish, sfxKey, sfxWord} from './lib/sound';
 import {check, units, type Lang} from './lib/typing';
+import {SoundToggle} from './components/SoundToggle';
 
 export type Kind = 'word' | 'sentence';
 export type Result = {mode: Mode; cpm: number; accuracy: number; items: number; duration_ms: number; score: number};
@@ -27,7 +29,7 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
   const [value, setValue] = useState('');
   const [pressed, setPressed] = useState<Set<string>>(new Set());
   const [bad, setBad] = useState(false);
-  const [items, setItems] = useState<StageItem[]>(() => [{key: `${queue[0].id}-0`, model: queue[0].model, phase: 'enter'}]);
+  const [ended, setEnded] = useState(false);
   const [bursts, setBursts] = useState<number[]>([]);
   const [combo, setCombo] = useState(0);
   const [latinWarn, setLatinWarn] = useState(false);
@@ -37,8 +39,17 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
   const composing = useRef(false);
   const pendingSubmit = useRef(false);
   const lastOk = useRef(true);
+  const progress = useRef(0);
+  progress.current = idx / queue.length;
 
   const bone = queue[idx];
+  // 3D 무대: 왼쪽 = 방금 친 뼈, 가운데 = 지금, 오른쪽 = 다음 (모두 회전). 끝나면 한 칸씩 더 밀림
+  const at = ended ? idx + 1 : idx;
+  const items: StageItem[] = [];
+  for (let i = Math.max(0, at - 2); i <= Math.min(queue.length - 1, at + 1); i++) {
+    const slot = i < at - 1 ? 'gone' : i === at - 1 ? 'prev' : i === at ? 'cur' : 'next';
+    items.push({key: `${queue[i].id}-${i}`, model: queue[i].model, slot});
+  }
   const target = targetOf(bone, lang, kind);
   const st = check(target, kind === 'word' ? value.trim() : value, lang);
 
@@ -53,6 +64,11 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
     focus();
     const down = (e: KeyboardEvent) => {
       setPressed((p) => new Set(p).add(e.code || e.key));
+      // 타격음: 글자·띄어쓰기 키마다 (조합 중인 한글도 물리 키 기준이라 한 자 한 자 남)
+      if (!e.repeat && !e.metaKey && !e.ctrlKey) {
+        if (e.code === 'Backspace') sfxBackspace();
+        else if (/^(Key|Digit)/.test(e.code) || ['Space', 'Comma', 'Period', 'Quote', 'Minus', 'Slash', 'Semicolon'].includes(e.code)) sfxKey(progress.current);
+      }
       if (document.activeElement !== input.current) focus();
     };
     const up = (e: KeyboardEvent) =>
@@ -86,6 +102,7 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
       stats.current.errors++;
       stats.current.clean = false;
       flashBad();
+      sfxBad();
     }
     lastOk.current = c.ok;
     setValue(v);
@@ -107,10 +124,13 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
         stats.current.clean = false;
       }
       flashBad();
+      sfxBad();
       return;
     }
     stats.current.units += units(target, lang).length + (kind === 'word' ? 1 : 1); // 확정 키(스페이스·엔터)까지
-    setCombo((c) => (stats.current.clean ? c + 1 : 0));
+    const nextCombo = stats.current.clean ? combo + 1 : 0;
+    setCombo(nextCombo);
+    sfxWord(nextCombo);
     stats.current.clean = true;
     lastOk.current = true;
     setBursts((b) => [...b.slice(-4), performance.now()]);
@@ -118,15 +138,15 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
     if (input.current) input.current.value = '';
     const next = idx + 1;
     if (next >= queue.length) {
-      setItems((it) => it.map((x) => ({...x, phase: 'exit'})));
-      setTimeout(finish, 700);
+      setEnded(true);
+      setTimeout(() => {
+        sfxFinish();
+        finish();
+      }, 700);
       return;
     }
     setIdx(next);
-    const key = `${queue[next].id}-${next}`;
-    setItems((it) => [...it.filter((x) => x.phase !== 'exit').map((x) => ({...x, phase: 'exit' as const})), {key, model: queue[next].model, phase: 'enter'}]);
-    setTimeout(() => setItems((it) => it.filter((x) => x.phase !== 'exit')), 700);
-  }, [value, target, kind, lang, idx, queue, finish, flashBad]);
+  }, [value, target, kind, lang, idx, queue, finish, flashBad, combo]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // 낱말 모드의 Space 는 다 친 뒤에만 확정 (영어 이름 'Carpal bones' 처럼 띄어쓰기가 있는 낱말)
@@ -178,12 +198,15 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
             <b>{idx + 1}</b>/{queue.length}
           </span>
         </div>
+        <div className="hud-right">
+        <SoundToggle />
         <div className={`combo ${combo >= 2 ? 'on' : ''}`} key={combo}>
           {combo >= 2 ? (
             <>
               COMBO<b>{combo}</b>
             </>
           ) : null}
+        </div>
         </div>
       </div>
       <div className="progress">
