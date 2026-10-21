@@ -4,7 +4,7 @@ import {BONES} from './data/bones';
 import {Game, type Kind, type Result} from './Game';
 import {ResultModal} from './components/ResultModal';
 import {SoundToggle} from './components/SoundToggle';
-import {getShared, isShared, submitScore, topScores, type Mode, type Score} from './lib/ranking';
+import {checkNickname, formatCode, getShared, getToken, isShared, newToken, parseCode, setToken, submitScore, topScores, type Mode, type Score} from './lib/ranking';
 import {initSound, startBgm} from './lib/sound';
 import type {Lang} from './lib/typing';
 
@@ -75,6 +75,13 @@ export default function App() {
   const [best, setBest] = useState(false);
   const [scoreId, setScoreId] = useState<number | null>(null);
   const [failReason, setFailReason] = useState('');
+  // 닉네임 선점 상태: taken = 남의 닉네임 → 복구 코드 입력, claimed = 이번 판으로 새로 선점
+  const [nickTaken, setNickTaken] = useState(false);
+  const [codeInput, setCodeInput] = useState('');
+  const [codeErr, setCodeErr] = useState('');
+  const [checking, setChecking] = useState(false);
+  const [claimed, setClaimed] = useState(false);
+  const [showCode, setShowCode] = useState(false);
   // 공유 링크로 들어온 경우: 그 기록에 도전하라는 문구
   const [vs, setVs] = useState<(Score & {rank: number}) | null>(null);
   useEffect(() => {
@@ -92,11 +99,32 @@ export default function App() {
 
   useEffect(() => preloadModels(['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot']), []);
 
-  const start = () => {
+  const start = async () => {
     const n = nick.trim().slice(0, 12);
-    if (!n) return;
+    if (!n || checking) return;
     initSound();
     startBgm();
+    // 닉네임 주인 확인 — 남의 닉네임이면 시작 전에 막음
+    if (isShared()) {
+      setChecking(true);
+      try {
+        const token = getToken(n);
+        const st = await checkNickname(n, token);
+        if (st === 'taken') {
+          setNickTaken(true);
+          setScreen('title');
+          setResult(null);
+          return;
+        }
+        if (st === 'free' && !token) setToken(n, newToken());
+        setClaimed(st === 'free');
+      } catch {
+        /* 확인 실패해도 게임은 함 — 저장 때 서버가 다시 막음 */
+      } finally {
+        setChecking(false);
+      }
+    }
+    setNickTaken(false);
     try {
       localStorage.setItem(NICK, n);
     } catch {
@@ -112,12 +140,31 @@ export default function App() {
     setScreen('game');
   };
 
+  // 다른 기기에서 내 닉네임 되찾기
+  const recover = async () => {
+    const code = parseCode(codeInput);
+    if (code.length !== 12) {
+      setCodeErr('복구 코드는 12자리예요');
+      return;
+    }
+    try {
+      if ((await checkNickname(nick.trim(), code)) === 'mine') {
+        setToken(nick.trim(), code);
+        setNickTaken(false);
+        setCodeInput('');
+        start();
+      } else setCodeErr('코드가 맞지 않아요');
+    } catch {
+      setCodeErr('확인하지 못했어요. 잠시 뒤 다시 해 주세요');
+    }
+  };
+
   // 끝나면 게임 화면 위에 결과 팝업 (확인을 눌러야 메인으로)
   const done = async (r: Result) => {
     setResult(r);
     setSaved('saving');
     try {
-      setScoreId(await submitScore({nickname: nick, ...r}));
+      setScoreId(await submitScore({nickname: nick, ...r}, getToken(nick)));
       setSaved('ok');
       const top = await topScores(r.mode, 500);
       const i = top.findIndex((x) => x.nickname.toLowerCase() === nick.toLowerCase());
@@ -126,7 +173,16 @@ export default function App() {
     } catch (e) {
       const code = (e as {code?: string; message?: string}).code;
       const msg = (e as {message?: string}).message ?? '';
-      setFailReason(code === '23514' ? '기록이 비정상적으로 빨라 랭킹에 올리지 않았어요' : msg.includes('too many') ? '잠시 뒤에 다시 올려 주세요 (1분에 5번까지)' : '');
+      setFailReason(
+        code === '23514'
+          ? '기록이 비정상적으로 빨라 랭킹에 올리지 않았어요'
+          : msg.includes('too many')
+            ? '잠시 뒤에 다시 올려 주세요 (1분에 5번까지)'
+            : msg.includes('nickname taken')
+              ? '다른 사람이 쓰는 닉네임이라 저장하지 못했어요'
+              : '',
+      );
+      setClaimed(false);
       setSaved('fail');
     }
     setRefresh((x) => x + 1);
@@ -171,6 +227,7 @@ export default function App() {
             saved={saved}
             rank={rank}
             scoreId={scoreId}
+            claimCode={claimed && saved === 'ok' ? formatCode(getToken(nick) ?? '') : ''}
             failReason={failReason}
             best={best}
             onOk={() => {
@@ -230,12 +287,44 @@ export default function App() {
               placeholder="닉네임 (12자까지)"
               maxLength={12}
               value={nick}
-              onChange={(e) => setNick(e.target.value)}
+              onChange={(e) => {
+                setNick(e.target.value);
+                setNickTaken(false);
+                setShowCode(false);
+              }}
               onKeyDown={(e) => e.key === 'Enter' && start()}
             />
-            <button className="start" disabled={!nick.trim()} onClick={start}>
-              시작하기
+            {nickTaken ? (
+              <div className="claim">
+                <div>
+                  <b>‘{nick.trim()}’</b>은 이미 다른 사람이 쓰는 닉네임이에요. 다른 닉네임을 쓰거나, 내 닉네임이라면 복구 코드를 넣어 주세요.
+                </div>
+                <div className="claim-row">
+                  <input
+                    className="nick-input"
+                    placeholder="복구 코드 (XXXX-XXXX-XXXX)"
+                    value={codeInput}
+                    onChange={(e) => {
+                      setCodeInput(e.target.value);
+                      setCodeErr('');
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && recover()}
+                  />
+                  <button className="ghost-btn" onClick={recover}>
+                    확인
+                  </button>
+                </div>
+                {codeErr ? <div className="claim-err">{codeErr}</div> : null}
+              </div>
+            ) : null}
+            <button className="start" disabled={!nick.trim() || checking} onClick={start}>
+              {checking ? '닉네임 확인 중…' : '시작하기'}
             </button>
+            {isShared() && nick.trim() && getToken(nick) && !nickTaken ? (
+              <button className="link-btn" onClick={() => setShowCode((x) => !x)}>
+                {showCode ? `복구 코드 ${formatCode(getToken(nick)!)}` : '내 닉네임 복구 코드 보기'}
+              </button>
+            ) : null}
             <SoundToggle />
             <Board mode={mode} me={nick} refresh={refresh} />
           </>

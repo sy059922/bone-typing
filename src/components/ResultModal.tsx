@@ -31,10 +31,11 @@ export const ResultModal: React.FC<{
   rank: number | null;
   scoreId: number | null;
   failReason?: string;
+  claimCode?: string;
   best: boolean;
   onOk: () => void;
   onAgain: () => void;
-}> = ({result, nick, saved, rank, scoreId, failReason, best, onOk, onAgain}) => {
+}> = ({result, nick, saved, rank, scoreId, failReason, claimCode, best, onOk, onAgain}) => {
   const [shown, setShown] = useState(0);
   const [toast, setToast] = useState('');
   const armed = useRef(false);
@@ -110,6 +111,19 @@ export const ResultModal: React.FC<{
             '랭킹에 올렸어요'
           )}
         </div>
+        {claimCode ? (
+          <div className="claim">
+            <div>
+              닉네임 <b>‘{nick}’</b>을 내 것으로 등록했어요. 다른 기기에서 이 닉네임을 쓰려면 아래 복구 코드가 필요해요.
+            </div>
+            <div className="claim-row">
+              <code className="claim-code">{claimCode}</code>
+              <button className="ghost-btn" onClick={() => navigator.clipboard.writeText(claimCode).then(() => say('복구 코드를 복사했어요'), () => say('복사가 막혀 있어요'))}>
+                복사
+              </button>
+            </div>
+          </div>
+        ) : null}
         <div className="modal-btns">
           <button className={`ghost-btn ${sharing ? 'on' : ''}`} onClick={() => setSharing((x) => !x)}>
             공유하기
