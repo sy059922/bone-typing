@@ -156,8 +156,9 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
       e.preventDefault();
       return;
     }
-    // 낱말 모드의 Space 는 다 친 뒤에만 확정 (영어 이름 'Carpal bones' 처럼 띄어쓰기가 있는 낱말)
-    const spaceSubmit = kind === 'word' && (e.key === ' ' || e.code === 'Space') && (value.trim() === target || !target.includes(' '));
+    // Space 는 끝까지 다 친 뒤에 확정 — 문장은 마침표 뒤 Space 로 다음 문장, 낱말은 띄어쓰기 없는 낱말이면 언제든
+    const isSpace = e.key === ' ' || e.code === 'Space';
+    const spaceSubmit = isSpace && (value.trim() === target || (kind === 'word' && !target.includes(' ')));
     const isSubmit = e.key === 'Enter' || spaceSubmit;
     if (e.key === 'Escape') onQuit();
     if (!isSubmit) return;
@@ -269,7 +270,7 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
         />
       </div>
       <div className="hint">
-        {latinWarn ? <span className="warn">한/영 키를 눌러 한글 입력으로 바꿔 주세요</span> : <span className="hint-keys">{kind === 'word' ? 'Space 또는 Enter 로 확정' : 'Enter 로 확정'}</span>}
+        {latinWarn ? <span className="warn">한/영 키를 눌러 한글 입력으로 바꿔 주세요</span> : <span className="hint-keys">{kind === 'word' ? 'Space 또는 Enter 로 확정' : '마침표까지 치고 Space 또는 Enter 로 다음 문장'}</span>}
         <span className="hint-touch">글자를 누르면 키보드가 열려요 · 확정은 띄어쓰기/엔터</span>
       </div>
 
