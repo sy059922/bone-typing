@@ -26,3 +26,5 @@ dist-ssr
 .env*
 !.env.example
 scripts/models/node_modules
+.vercel
+supabase/.temp
