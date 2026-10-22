@@ -207,14 +207,59 @@ const scheduleStep = (s: number, t: number) => {
   for (const [st, m, len] of mel) if (st === s % 64) tone({wave: 'p25', f0: midi(m), t, dur: STEP * len * 0.95, vol: 0.2, bus: bgmBus, attack: 0.004});
 };
 
+// ── 블라인드 모드 곡: 150BPM D 프리지안, 쿵쿵 네 박 + 웅웅대는 저음 반복 + 삼전음 찌르기 (살벌하게)
+const BPM_B = 150;
+const STEP_B = 60 / BPM_B / 4;
+// 저음 반복 (16스텝 한 마디): D 위주, b2(E♭)로 긴장
+const BASS_B = [38, 38, 50, 38, 38, 39, 38, 50, 38, 38, 50, 38, 39, 38, 41, 39];
+// 4마디마다 바뀌는 높은 찌르기 [스텝, MIDI] — D–G♯ 삼전음, E♭ 반음
+const STAB_B: [number, number][] = [
+  [0, 74], [6, 80], [12, 75],
+  [16, 74], [22, 80], [26, 81], [28, 80],
+  [32, 77], [38, 80], [44, 75],
+  [48, 74], [52, 75], [54, 80], [58, 86], [60, 85], [62, 80],
+];
+
+const scheduleBlind = (s: number, t: number) => {
+  const inBar = s % 16;
+  const bar = Math.floor((s % 64) / 16);
+  // 드럼: 네 박 킥 · 2·4 스네어 · 16분 하이햇 · 마지막 마디엔 탐 굴리기
+  if (inBar % 4 === 0) tone({wave: 'sine', f0: 120, f1: 38, t, dur: 0.16, vol: 0.7, bus: bgmBus});
+  if (inBar % 8 === 4) hiss(t, 0.14, 0.42, bgmBus, 'bandpass', 1400);
+  hiss(t, 0.025, inBar % 2 ? 0.07 : 0.14, bgmBus, 'highpass', 8000);
+  if (bar === 3 && inBar >= 12) tone({wave: 'tri', f0: midi(50 - (inBar - 12) * 2), t, dur: STEP_B * 0.9, vol: 0.35, bus: bgmBus});
+  // 웅웅 저음 (펄스 50% 로 거칠게)
+  tone({wave: 'p50', f0: midi(BASS_B[inBar]), t, dur: STEP_B * 0.8, vol: 0.126, bus: bgmBus, attack: 0.003});
+  tone({wave: 'tri', f0: midi(BASS_B[inBar] - 12), t, dur: STEP_B * 0.9, vol: 0.315, bus: bgmBus});
+  // 감7 화음 아르페지오 (D F G♯ B) — 불안하게 맴돎
+  const dim = [62, 65, 68, 71];
+  tone({wave: 'p12', f0: midi(dim[s % 4] + (bar === 2 ? 1 : 0)), t, dur: STEP_B * 0.7, vol: 0.042, bus: bgmBus});
+  for (const [st, m] of STAB_B) if (st === s % 64) tone({wave: 'p25', f0: midi(m), t, dur: STEP_B * 1.6, vol: 0.119, bus: bgmBus, attack: 0.002});
+};
+
+type Theme = 'normal' | 'blind';
+let theme: Theme = 'normal';
+const song = () => (theme === 'blind' ? {step: STEP_B, play: scheduleBlind} : {step: STEP, play: scheduleStep});
+
+// 곡 바꾸기 (블라인드 모드 켜고 끌 때). 재생 중이면 바로 갈아탐
+export function setTheme(th: Theme) {
+  if (th === theme) return;
+  theme = th;
+  if (timer !== null) {
+    stopBgm();
+    startBgm();
+  }
+}
+
 export function startBgm() {
   if (!ctx || timer !== null) return;
   nextT = ctx.currentTime + 0.08;
   step = 0;
   timer = window.setInterval(() => {
+    const {step: dt, play} = song();
     while (nextT < ctx!.currentTime + 0.12) {
-      scheduleStep(step, nextT);
-      nextT += STEP;
+      play(step, nextT);
+      nextT += dt;
       step++;
     }
   }, 25);
@@ -235,7 +280,7 @@ export function setPref(k: 'bgm' | 'sfx', on: boolean) {
 }
 
 // 미리듣기 WAV 만들기 (개발용 — ?demo 페이지에서 호출): 배경음 위에 실제 게임처럼 타자·오타·성공·팡파르
-export async function renderDemo(seconds = 20): Promise<string> {
+export async function renderDemo(seconds = 20, th: Theme = 'normal'): Promise<string> {
   const SR = 44100;
   const off = new OfflineAudioContext(2, SR * seconds, SR);
   const saved = ctx;
@@ -259,7 +304,8 @@ export async function renderDemo(seconds = 20): Promise<string> {
   pulse['50'] = pulseWave(off as BaseAudioContext, 0.5);
   const on = {...prefs};
   prefs.bgm = prefs.sfx = true;
-  for (let i = 0, t = 0.05; t < seconds - 0.2; i++, t += STEP) scheduleStep(i, t);
+  const sg = th === 'blind' ? {step: STEP_B, play: scheduleBlind} : {step: STEP, play: scheduleStep};
+  for (let i = 0, t = 0.05; t < seconds - 0.2; i++, t += sg.step) sg.play(i, t);
   // 2초부터: 낱말마다 6타 + 확정, 세 번째 낱말에서 오타 하나
   let t = 2;
   for (let w = 0; w < 9; w++) {

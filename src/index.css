@@ -806,3 +806,74 @@ button {
   text-align: left;
   text-decoration: underline;
 }
+
+/* 블라인드 모드 */
+.blind-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  border: 1px solid var(--line2);
+  background: transparent;
+  color: var(--sub);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.blind-knob {
+  flex: none;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--line2);
+  position: relative;
+  transition: background 0.2s;
+}
+.blind-knob::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--sub);
+  transition: transform 0.2s, background 0.2s;
+}
+.blind-toggle.on {
+  border-color: var(--bad);
+  color: var(--text);
+}
+.blind-toggle.on .blind-knob {
+  background: var(--bad);
+}
+.blind-toggle.on .blind-knob::after {
+  transform: translateX(16px);
+  background: var(--white);
+}
+.blind-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.blind-text b {
+  font-size: 15px;
+  color: inherit;
+}
+.blind-text small {
+  font-size: 12px;
+  color: var(--dim);
+}
+.blind-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--white);
+  background: var(--bad);
+  padding: 4px 8px;
+  border-radius: 4px;
+  align-self: center;
+}
+.blind-badge.peek {
+  background: var(--line2);
+  color: var(--sub);
+}

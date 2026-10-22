@@ -24,13 +24,16 @@ const shuffle = <T,>(a: T[]) => {
 
 const targetOf = (b: Bone, lang: Lang, kind: Kind) => (kind === 'sentence' ? b.sentence[lang] : lang === 'ko' ? b.ko : b.en);
 
-export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, onDone, onQuit}) => {
+export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; blind: boolean; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, blind, onDone, onQuit}) => {
   const queue = useMemo(() => shuffle(pool).slice(0, ROUND[kind]), [kind, pool]);
   const [idx, setIdx] = useState(0);
   const [value, setValue] = useState('');
   const [pressed, setPressed] = useState<Set<string>>(new Set());
   const [bad, setBad] = useState(false);
   const [ended, setEnded] = useState(false);
+  // 블라인드 모드: 정답 글씨를 숨기고, 틀린 문제에서만 보여 줌 (다음 문제부터 다시 숨김)
+  const [revealed, setRevealed] = useState(false);
+  const hide = blind && !revealed;
   const endedRef = useRef(false);
   endedRef.current = ended;
   const [bursts, setBursts] = useState<number[]>([]);
@@ -107,6 +110,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
       stats.current.clean = false;
       flashBad();
       sfxBad();
+      setRevealed(true);
     }
     lastOk.current = c.ok;
     setValue(v);
@@ -129,6 +133,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
       }
       flashBad();
       sfxBad();
+      setRevealed(true);
       return;
     }
     stats.current.units += units(target, lang).length + (kind === 'word' ? 1 : 1); // 확정 키(스페이스·엔터)까지
@@ -150,6 +155,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
       return;
     }
     setIdx(next);
+    setRevealed(false);
   }, [value, target, kind, lang, idx, queue, finish, flashBad, combo]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -197,6 +203,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
           그만하기<span className="esc"> Esc</span>
         </button>
         <div className="hud-stats">
+          {blind ? <span className={`blind-badge ${revealed ? 'peek' : ''}`}>{revealed ? 'BLIND · 공개' : 'BLIND'}</span> : null}
           <span>
             <b>{liveCpm}</b> {lang === 'ko' ? '타' : 'CPM'}
           </span>
@@ -246,7 +253,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
           </span>
         ))}
         <span className="caret" />
-        {ghost.map((ch, i) => (
+        {(hide ? [] : ghost).map((ch, i) => (
           <span key={`g${i}`} className="ch ghost">
             {ch === ' ' ? ' ' : ch}
           </span>
@@ -275,7 +282,12 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
         <span className="hint-touch">글자를 누르면 키보드가 열려요 · 확정은 띄어쓰기/엔터</span>
       </div>
 
-      <Keyboard lang={lang} pressed={pressed} next={st.ok ? st.nextKey ?? (st.doneUnits === st.totalUnits ? [kind === 'word' ? 'Space' : 'Enter', false] : null) : ['Backspace', false]} flashBad={bad} />
+      <Keyboard
+        lang={lang}
+        pressed={pressed}
+        next={!st.ok ? ['Backspace', false] : hide ? null : st.nextKey ?? (st.doneUnits === st.totalUnits ? [kind === 'word' ? 'Space' : 'Enter', false] : null)}
+        flashBad={bad}
+      />
     </div>
   );
 };

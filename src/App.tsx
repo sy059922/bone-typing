@@ -7,7 +7,7 @@ import {Game, type Kind, type Result} from './Game';
 import {ResultModal} from './components/ResultModal';
 import {SoundToggle} from './components/SoundToggle';
 import {checkNickname, formatCode, getShared, getToken, isShared, newToken, parseCode, setToken, submitScore, topScores, type Mode, type Score} from './lib/ranking';
-import {initSound, startBgm} from './lib/sound';
+import {initSound, setTheme, startBgm} from './lib/sound';
 import type {Lang} from './lib/typing';
 
 const NICK = 'bone-typing:nick';
@@ -62,6 +62,23 @@ const IDLE_MUSCLE = [{key: 'title-quads', model: MUSCLES.find((b) => b.id === 'q
 export default function App() {
   const [screen, setScreen] = useState<'title' | 'game'>('title');
   const [cat, setCat] = useState<Category>('bone');
+  const [blind, setBlindState] = useState(() => {
+    try {
+      return localStorage.getItem('bone-typing:blind') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const setBlind = (on: boolean) => {
+    setBlindState(on);
+    setTheme(on ? 'blind' : 'normal');
+    try {
+      localStorage.setItem('bone-typing:blind', on ? '1' : '0');
+    } catch {
+      /* 무시 */
+    }
+  };
+  useEffect(() => setTheme(blind ? 'blind' : 'normal'), [blind]);
   const [lang, setLang] = useState<Lang>('ko');
   const [kind, setKind] = useState<Kind>('word');
   const [nick, setNick] = useState(readNick);
@@ -218,7 +235,7 @@ export default function App() {
   if (screen === 'game')
     return (
       <>
-        <Game key={round} cat={cat} pool={cat === 'muscle' ? MUSCLES : BONES} lang={lang} kind={kind} onDone={done} onQuit={() => setScreen('title')} />
+        <Game key={round} cat={cat} pool={cat === 'muscle' ? MUSCLES : BONES} lang={lang} kind={kind} blind={blind} onDone={done} onQuit={() => setScreen('title')} />
         {result ? (
           <ResultModal
             result={result}
@@ -289,6 +306,13 @@ export default function App() {
                 문장 연습
               </button>
             </div>
+            <button className={`blind-toggle ${blind ? 'on' : ''}`} onClick={() => setBlind(!blind)} role="switch" aria-checked={blind}>
+              <span className="blind-knob" />
+              <span className="blind-text">
+                <b>블라인드 모드</b>
+                <small>정답 글씨 숨기기 · 틀린 문제만 보여 줌</small>
+              </span>
+            </button>
             <input
               className="nick-input"
               placeholder="닉네임 (12자까지)"
