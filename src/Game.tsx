@@ -1,13 +1,14 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {BoneStage, type StageItem} from './components/BoneStage';
 import {Keyboard} from './components/Keyboard';
-import {BONES, type Bone} from './data/bones';
-import {scoreOf, type Mode} from './lib/ranking';
+import type {Bone} from './data/bones';
+import {modeOf, type Category, type Kind, type Mode} from './lib/modes';
+import {scoreOf} from './lib/ranking';
 import {sfxBackspace, sfxBad, sfxFinish, sfxKey, sfxWord} from './lib/sound';
 import {check, units, type Lang} from './lib/typing';
 import {SoundToggle} from './components/SoundToggle';
 
-export type Kind = 'word' | 'sentence';
+export type {Kind};
 export type Result = {mode: Mode; cpm: number; accuracy: number; items: number; duration_ms: number; score: number};
 
 const ROUND = {word: 20, sentence: 8};
@@ -23,8 +24,8 @@ const shuffle = <T,>(a: T[]) => {
 
 const targetOf = (b: Bone, lang: Lang, kind: Kind) => (kind === 'sentence' ? b.sentence[lang] : lang === 'ko' ? b.ko : b.en);
 
-export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void; onQuit: () => void}> = ({lang, kind, onDone, onQuit}) => {
-  const queue = useMemo(() => shuffle(BONES).slice(0, ROUND[kind]), [kind]);
+export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, onDone, onQuit}) => {
+  const queue = useMemo(() => shuffle(pool).slice(0, ROUND[kind]), [kind, pool]);
   const [idx, setIdx] = useState(0);
   const [value, setValue] = useState('');
   const [pressed, setPressed] = useState<Set<string>>(new Set());
@@ -116,8 +117,8 @@ export const Game: React.FC<{lang: Lang; kind: Kind; onDone: (r: Result) => void
     const ms = Math.max(1, performance.now() - (s.start || performance.now()));
     const cpm = Math.round((s.units / ms) * 60000);
     const accuracy = Math.round((s.units / Math.max(1, s.units + s.errors)) * 10000) / 100;
-    onDone({mode: `${lang}-${kind}` as Mode, cpm, accuracy, items: queue.length, duration_ms: Math.round(ms), score: scoreOf(cpm, accuracy)});
-  }, [lang, kind, queue.length, onDone]);
+    onDone({mode: modeOf(cat, lang, kind), cpm, accuracy, items: queue.length, duration_ms: Math.round(ms), score: scoreOf(cpm, accuracy)});
+  }, [cat, lang, kind, queue.length, onDone]);
 
   const submit = useCallback(() => {
     const v = kind === 'word' ? value.trim() : value.replace(/\s+$/, '');

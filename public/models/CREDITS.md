@@ -13,6 +13,7 @@
 - 데이터: **BodyParts3D** Release 3.0, 폴리곤 95% 감축판 (`BodyParts3D_3.0_obj_95.zip`, `parts_list_e.txt`)
   - https://dbarchive.biosciencedbc.jp/data/bodyparts3d/20110915/
   - 소개: https://dbarchive.biosciencedbc.jp/en/bodyparts3d/
+- 근육 모델(`muscle_upper.glb`, `muscle_lower.glb`, `muscle_trunk.glb`, 맥락 뼈 `b_*` 포함): **BodyParts3D** Release 4.0 is_a 판, 99% 감축판 (`isa_BP3D_4.0_obj_99.zip`, `isa_element_parts.txt`, https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html) — 오른쪽 근육 골라 갈래 합침·조각 정리·작은 근육 세분화·경량화, 같은 CC BY-SA 2.1 JP (변환: `scripts/models/build_muscles.mjs`)
 - 원 저작권 표기(원본 요구 문구):
   "BodyParts3D, (c) The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan"
 - 라이선스: Creative Commons 저작자표시-동일조건변경허락 2.1 일본 (CC BY-SA 2.1 JP)

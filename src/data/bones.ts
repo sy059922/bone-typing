@@ -2,14 +2,14 @@
 // ko = 옛 한자어 용어, tag = 같은 이름이 둘일 때 화면에만 붙는 꼬리표
 // model = 3D 조립 파일(public/models/<file>.glb)의 노드 — hl 은 강조, show 는 흐린 맥락(없으면 hl 만)
 
-export type ModelFile = 'spine' | 'arm' | 'hand' | 'pelvis' | 'leg' | 'foot';
+export type ModelFile = 'spine' | 'arm' | 'hand' | 'pelvis' | 'leg' | 'foot' | 'muscle_upper' | 'muscle_lower' | 'muscle_trunk';
 export type ModelRef = {file: ModelFile; hl: string[]; show?: string[]};
 export type Bone = {
   id: string;
   ko: string;
   en: string;
   tag?: {ko: string; en: string};
-  region: 'spine' | 'upper' | 'lower' | 'group';
+  region: string;
   model: ModelRef;
   sentence: {ko: string; en: string};
 };

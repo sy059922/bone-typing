@@ -1,14 +1,9 @@
 import confetti from 'canvas-confetti';
 import {useEffect, useRef, useState} from 'react';
 import type {Result} from '../Game';
+import {modeLabel} from '../lib/modes';
 import {canSystemShare, copyResult, downloadCard, systemShare} from '../lib/share';
 
-const MODE_LABEL: Record<string, string> = {
-  'ko-word': '한글 · 낱말',
-  'ko-sentence': '한글 · 문장',
-  'en-word': 'English · Word',
-  'en-sentence': 'English · Sentence',
-};
 
 // 무채색 폭죽 — 흰색·뼈색·회색 조각
 const COLORS = ['#FFFFFF', '#F7F5F0', '#D4D4D4', '#9A9A9A', '#5C5C5C'];
@@ -82,7 +77,7 @@ export const ResultModal: React.FC<{
     <div className="modal-back" onKeyDown={(e) => e.key === 'Escape' && armed.current && onOk()}>
       <div className="modal" role="dialog" aria-modal="true" aria-label="게임 결과">
         <div className="modal-head">
-          <span>{MODE_LABEL[result.mode]}</span>
+          <span>{modeLabel(result.mode)}</span>
           <span>{nick}</span>
         </div>
         {best ? <div className="modal-best">NEW BEST</div> : null}
@@ -91,7 +86,7 @@ export const ResultModal: React.FC<{
         <div className="result-grid">
           <div>
             <b>{result.cpm}</b>
-            <span>{result.mode.startsWith('ko') ? '타수' : 'CPM'}</span>
+            <span>{result.mode.includes('ko-') ? '타수' : 'CPM'}</span>
           </div>
           <div>
             <b>{result.accuracy.toFixed(1)}%</b>

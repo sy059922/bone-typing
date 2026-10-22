@@ -23,7 +23,7 @@ export async function GET(req: Request) {
   if (!s) return Response.redirect(`${u.origin}/og.png`, 302);
 
   const stats: [string, string][] = [
-    [String(s.cpm), s.mode.startsWith('ko') ? '타수' : 'CPM'],
+    [String(s.cpm), s.mode.includes('ko-') ? '타수' : 'CPM'],
     [`${s.accuracy.toFixed(1)}%`, '정확도'],
     [`${s.rank}위`, '전체 순위'],
   ];

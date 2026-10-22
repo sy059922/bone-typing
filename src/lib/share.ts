@@ -1,19 +1,14 @@
 import type {Result} from '../Game';
+import {modeShort} from './modes';
 
 export const SITE = 'https://bone-typing.vercel.app';
 
-const MODE_KO: Record<string, string> = {
-  'ko-word': '한글 낱말',
-  'ko-sentence': '한글 문장',
-  'en-word': '영어 낱말',
-  'en-sentence': '영어 문장',
-};
 
 // 기록 번호가 있으면 그 기록 썸네일이 뜨는 공유 링크
 export const shareUrl = (id: number | null) => (id ? `${SITE}/r/${id}` : SITE);
 
 export const shareText = (r: Result, nick: string, rank: number | null, id: number | null = null) =>
-  `🦴 뼈이름으로 타자연습\n${nick} · ${MODE_KO[r.mode]} ${r.score}점 (${r.cpm}타 · 정확도 ${r.accuracy.toFixed(1)}%)${rank ? ` · 전체 ${rank}위` : ''}\n나도 도전하기 👉 ${shareUrl(id)}`;
+  `🦴 뼈이름으로 타자연습${r.mode.startsWith('m-') ? ' · 근육편' : ''}\n${nick} · ${modeShort(r.mode)} ${r.score}점 (${r.cpm}타 · 정확도 ${r.accuracy.toFixed(1)}%)${rank ? ` · 전체 ${rank}위` : ''}\n나도 도전하기 👉 ${shareUrl(id)}`;
 
 // 결과 카드 그림 (1080×1350, 인스타·카톡 공유용) — 게임과 같은 무채색
 export async function resultCard(r: Result, nick: string, rank: number | null): Promise<Blob> {
@@ -42,7 +37,7 @@ export async function resultCard(r: Result, nick: string, rank: number | null): 
   g.fillText('타자연습', 90, 350);
   g.fillStyle = '#9A9A9A';
   g.font = `500 40px ${sans}`;
-  g.fillText(`${nick} · ${MODE_KO[r.mode]}`, 90, 500);
+  g.fillText(`${nick} · ${modeShort(r.mode)}`, 90, 500);
   g.fillStyle = '#FFFFFF';
   g.font = `700 260px ${mono}`;
   g.fillText(String(r.score), 80, 760);
@@ -51,7 +46,7 @@ export async function resultCard(r: Result, nick: string, rank: number | null): 
   g.fillText('SCORE = CPM × ACCURACY²', 90, 820);
   // 숫자 셋
   const stats: [string, string][] = [
-    [String(r.cpm), r.mode.startsWith('ko') ? '타수' : 'CPM'],
+    [String(r.cpm), r.mode.includes('ko-') ? '타수' : 'CPM'],
     [`${r.accuracy.toFixed(1)}%`, '정확도'],
     [rank ? `${rank}위` : '—', '전체 순위'],
   ];

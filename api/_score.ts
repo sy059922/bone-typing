@@ -1,19 +1,23 @@
 // 공유 링크용 공통: 기록 하나를 Supabase 에서 읽기 (공개 anon 키 · get_score RPC — 진짜 기록만)
 export type SharedScore = {
   nickname: string;
-  mode: 'ko-word' | 'ko-sentence' | 'en-word' | 'en-sentence';
+  mode: string;
   score: number;
   cpm: number;
   accuracy: number;
   rank: number;
 };
 
-export const MODE_KO: Record<string, string> = {
+const MODE_BASE: Record<string, string> = {
   'ko-word': '한글 낱말',
   'ko-sentence': '한글 문장',
   'en-word': '영어 낱말',
   'en-sentence': '영어 문장',
 };
+// 'm-' 로 시작하면 근육 모드
+export const MODE_KO = new Proxy({} as Record<string, string>, {
+  get: (_, m: string) => (m.startsWith('m-') ? `근육 ${MODE_BASE[m.slice(2)]}` : `뼈 ${MODE_BASE[m]}`),
+});
 
 export async function getScore(id: string | null): Promise<SharedScore | null> {
   if (!id || !/^\d{1,12}$/.test(id)) return null;

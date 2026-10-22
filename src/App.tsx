@@ -1,6 +1,8 @@
 import {useEffect, useState} from 'react';
 import {BoneStage, preloadModels} from './components/BoneStage';
 import {BONES} from './data/bones';
+import {MUSCLES} from './data/muscles';
+import {modeLabel, modeOf, parseMode, type Category} from './lib/modes';
 import {Game, type Kind, type Result} from './Game';
 import {ResultModal} from './components/ResultModal';
 import {SoundToggle} from './components/SoundToggle';
@@ -17,12 +19,6 @@ const readNick = () => {
   }
 };
 
-const MODE_LABEL: Record<Mode, string> = {
-  'ko-word': '한글 · 낱말',
-  'ko-sentence': '한글 · 문장',
-  'en-word': 'English · Word',
-  'en-sentence': 'English · Sentence',
-};
 
 const Board: React.FC<{mode: Mode; me?: string; refresh: number}> = ({mode, me, refresh}) => {
   const [rows, setRows] = useState<Score[] | null>(null);
@@ -41,7 +37,7 @@ const Board: React.FC<{mode: Mode; me?: string; refresh: number}> = ({mode, me, 
   return (
     <div className="board">
       <div className="board-head">
-        RANKING · {MODE_LABEL[mode]}
+        RANKING · {modeLabel(mode)}
         <span className="board-scope">{isShared() ? '전체' : '이 기기'}</span>
       </div>
       {err ? <div className="board-empty">랭킹을 불러오지 못했어요</div> : null}
@@ -61,9 +57,11 @@ const Board: React.FC<{mode: Mode; me?: string; refresh: number}> = ({mode, me, 
 };
 
 const IDLE = [{key: 'title-spine', model: BONES.find((b) => b.id === 'spine')!.model, slot: 'cur' as const}];
+const IDLE_MUSCLE = [{key: 'title-quads', model: MUSCLES.find((b) => b.id === 'quadriceps')!.model, slot: 'cur' as const}];
 
 export default function App() {
   const [screen, setScreen] = useState<'title' | 'game'>('title');
+  const [cat, setCat] = useState<Category>('bone');
   const [lang, setLang] = useState<Lang>('ko');
   const [kind, setKind] = useState<Kind>('word');
   const [nick, setNick] = useState(readNick);
@@ -90,14 +88,15 @@ export default function App() {
     getShared(id).then((s) => {
       if (!s) return;
       setVs(s);
-      const [l, k] = s.mode.split('-') as [Lang, Kind];
-      setLang(l);
-      setKind(k);
+      const m = parseMode(s.mode);
+      setCat(m.cat);
+      setLang(m.lang);
+      setKind(m.kind);
     });
   }, []);
-  const mode = `${lang}-${kind}` as Mode;
+  const mode = modeOf(cat, lang, kind);
 
-  useEffect(() => preloadModels(['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot']), []);
+  useEffect(() => preloadModels(cat === 'muscle' ? ['muscle_upper', 'muscle_lower', 'muscle_trunk'] : ['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot']), [cat]);
 
   const start = async () => {
     const n = nick.trim().slice(0, 12);
@@ -190,7 +189,7 @@ export default function App() {
 
   // 개발용: ?bone=<id> 로 뼈 하나만 띄워 3D 확인
   const peek = new URLSearchParams(location.search).get('bone');
-  const peekBone = peek ? BONES.find((b) => b.id === peek) : null;
+  const peekBone = peek ? [...BONES, ...MUSCLES].find((b) => b.id === peek) : null;
   // 개발용: ?og 로 링크 미리보기 그림(1200×630) 화면
   if (new URLSearchParams(location.search).has('og'))
     return (
@@ -219,7 +218,7 @@ export default function App() {
   if (screen === 'game')
     return (
       <>
-        <Game key={round} lang={lang} kind={kind} onDone={done} onQuit={() => setScreen('title')} />
+        <Game key={round} cat={cat} pool={cat === 'muscle' ? MUSCLES : BONES} lang={lang} kind={kind} onDone={done} onQuit={() => setScreen('title')} />
         {result ? (
           <ResultModal
             result={result}
@@ -250,7 +249,7 @@ export default function App() {
       }}
     >
       <div className="title-stage">
-        <BoneStage items={IDLE} bad={false} bursts={[]} />
+        <BoneStage items={cat === 'muscle' ? IDLE_MUSCLE : IDLE} bad={false} bursts={[]} />
       </div>
       <div className="title-panel">
         {screen === 'title' ? (
@@ -259,13 +258,21 @@ export default function App() {
               뼈이름으로
               <br />
               <span className="logo-king">타자연습</span>
-              <span className="logo-sub">BONE NAME TYPING</span>
+              <span className="logo-sub">{cat === 'muscle' ? 'BONE NAME TYPING · MUSCLE EDITION' : 'BONE NAME TYPING'}</span>
             </div>
             {vs ? (
               <div className="vs">
-                <b>{vs.nickname}</b>님의 <b>{vs.score}점</b>({MODE_LABEL[vs.mode]} · 전체 {vs.rank}위)에 도전해 보세요
+                <b>{vs.nickname}</b>님의 <b>{vs.score}점</b>({modeLabel(vs.mode)} · 전체 {vs.rank}위)에 도전해 보세요
               </div>
             ) : null}
+            <div className="seg">
+              <button className={cat === 'bone' ? 'on' : ''} onClick={() => setCat('bone')}>
+                뼈
+              </button>
+              <button className={cat === 'muscle' ? 'on' : ''} onClick={() => setCat('muscle')}>
+                근육
+              </button>
+            </div>
             <div className="seg">
               <button className={lang === 'ko' ? 'on' : ''} onClick={() => setLang('ko')}>
                 한글

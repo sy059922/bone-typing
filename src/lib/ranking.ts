@@ -1,7 +1,8 @@
 import {createClient, type SupabaseClient} from '@supabase/supabase-js';
 
 // 경쟁 랭킹 — Supabase 가 설정돼 있으면 모두와 공유, 아니면 이 브라우저에만 저장 (개발·오프라인용)
-export type Mode = 'ko-word' | 'ko-sentence' | 'en-word' | 'en-sentence';
+import type {Mode} from './modes';
+export type {Mode};
 export type Score = {nickname: string; mode: Mode; score: number; cpm: number; accuracy: number; items: number; duration_ms: number; created_at?: string};
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
