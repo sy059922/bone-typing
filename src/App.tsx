@@ -6,7 +6,7 @@ import {modeLabel, modeOf, parseMode, type Category} from './lib/modes';
 import {Game, type Kind, type Result, type Term} from './Game';
 import {ResultModal} from './components/ResultModal';
 import {SoundToggle} from './components/SoundToggle';
-import {checkNickname, formatCode, getShared, getToken, isShared, newToken, parseCode, setToken, submitScore, topScores, type Mode, type Score} from './lib/ranking';
+import {logClick, checkNickname, formatCode, getShared, getToken, isShared, newToken, parseCode, setToken, submitScore, topScores, type Mode, type Score} from './lib/ranking';
 import {initSound, setTheme, startBgm} from './lib/sound';
 import type {Lang} from './lib/typing';
 
@@ -387,7 +387,7 @@ export default function App() {
           </>
         ) : null}
         <div className="credit">
-          3D 뼈 모델: BodyParts3D © DBCLS, CC BY-SA 2.1 JP (단위·경량화·이름 수정) · made by <a className="credit-link" href="https://www.instagram.com/iamnotwoodz/" target="_blank" rel="noopener noreferrer">@iamnotwoodz</a>
+          3D 뼈 모델: BodyParts3D © DBCLS, CC BY-SA 2.1 JP (단위·경량화·이름 수정) · made by <a className="credit-link" href="https://www.instagram.com/iamnotwoodz/" target="_blank" rel="noopener noreferrer" onClick={() => logClick('follow_title')}>@iamnotwoodz</a>
         </div>
       </div>
     </div>

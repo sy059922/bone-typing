@@ -2,6 +2,7 @@ import confetti from 'canvas-confetti';
 import {useEffect, useRef, useState} from 'react';
 import type {Result} from '../Game';
 import {modeLabel} from '../lib/modes';
+import {logClick} from '../lib/ranking';
 import {canSystemShare, copyResult, downloadCard, systemShare} from '../lib/share';
 
 
@@ -64,11 +65,16 @@ export const ResultModal: React.FC<{
     setTimeout(() => setToast(''), 3000);
   };
   const doSystem = async () => {
+    logClick('share_system');
     const r = await systemShare(result, nick, rank, scoreId);
     if (r === 'failed') say('공유창을 열 수 없어요. 결과 복사나 이미지 저장을 써 주세요.');
   };
-  const doCopy = async () => say((await copyResult(result, nick, rank, scoreId)) ? '결과를 복사했어요. 카카오톡 대화창에 붙여 넣어 보세요.' : '복사가 막혀 있어요.');
+  const doCopy = async () => {
+    logClick('share_copy');
+    say((await copyResult(result, nick, rank, scoreId)) ? '결과를 복사했어요. 카카오톡 대화창에 붙여 넣어 보세요.' : '복사가 막혀 있어요.');
+  };
   const doSave = async () => {
+    logClick('share_image');
     await downloadCard(result, nick, rank);
     say('결과 카드 이미지를 저장했어요.');
   };
@@ -107,7 +113,7 @@ export const ResultModal: React.FC<{
           )}
         </div>
         {/* 게임 유입 → 인스타 팔로우 */}
-        <a className="follow" href="https://www.instagram.com/iamnotwoodz/" target="_blank" rel="noopener noreferrer">
+        <a className="follow" href="https://www.instagram.com/iamnotwoodz/" target="_blank" rel="noopener noreferrer" onClick={() => logClick('follow')}>
           <span className="follow-handle">@iamnotwoodz</span>
           <span className="follow-text">팔로우하고 새 모드 소식 받기</span>
           <span className="follow-arrow">→</span>

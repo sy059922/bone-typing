@@ -79,6 +79,12 @@ export async function submitScore(s: Score, token: string | null): Promise<numbe
   return null;
 }
 
+// 버튼 클릭 기록 (팔로우·공유) — 실패해도 조용히 무시
+export type ClickKind = 'follow' | 'follow_title' | 'share_system' | 'share_copy' | 'share_image';
+export const logClick = (kind: ClickKind) => {
+  if (sb) void sb.rpc('log_click', {p_kind: kind}).then(() => undefined, () => undefined);
+};
+
 // 공유받은 기록 하나 (도전 문구용)
 export async function getShared(id: number): Promise<(Score & {rank: number}) | null> {
   if (!sb) return null;
