@@ -106,6 +106,12 @@ export const ResultModal: React.FC<{
             '랭킹에 올렸어요'
           )}
         </div>
+        {/* 게임 유입 → 인스타 팔로우 */}
+        <a className="follow" href="https://www.instagram.com/iamnotwoodz/" target="_blank" rel="noopener noreferrer">
+          <span className="follow-handle">@iamnotwoodz</span>
+          <span className="follow-text">팔로우하고 새 모드 소식 받기</span>
+          <span className="follow-arrow">→</span>
+        </a>
         {claimCode ? (
           <div className="claim">
             <div>

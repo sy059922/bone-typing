@@ -883,3 +883,67 @@ button {
   font-weight: 400;
   opacity: 0.6;
 }
+
+/* 인스타 팔로우 */
+.follow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--text);
+  color: var(--white);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.follow:hover {
+  background: #1f1f1f;
+}
+.follow-handle {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 14px;
+}
+.follow-text {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+.follow-arrow {
+  font-weight: 700;
+}
+.credit-link {
+  color: var(--sub);
+  font-weight: 700;
+}
+.follow-text {
+  word-break: keep-all;
+}
+.modal-btns button {
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .modal {
+    padding: 20px 18px 18px;
+  }
+  .follow {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+  .follow-handle {
+    flex-basis: 100%;
+  }
+  .follow-text {
+    font-size: 13px;
+  }
+  .modal-btns {
+    grid-template-columns: 1fr 1fr 1.2fr;
+  }
+  .modal-btns .ghost-btn {
+    font-size: 13px;
+    padding: 9px 6px;
+  }
+  .modal-score {
+    font-size: 76px;
+  }
+}

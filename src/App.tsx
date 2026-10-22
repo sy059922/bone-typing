@@ -387,7 +387,7 @@ export default function App() {
           </>
         ) : null}
         <div className="credit">
-          3D 뼈 모델: BodyParts3D © DBCLS, CC BY-SA 2.1 JP (단위·경량화·이름 수정) · made by <b>@iamnotwoodz</b>
+          3D 뼈 모델: BodyParts3D © DBCLS, CC BY-SA 2.1 JP (단위·경량화·이름 수정) · made by <a className="credit-link" href="https://www.instagram.com/iamnotwoodz/" target="_blank" rel="noopener noreferrer">@iamnotwoodz</a>
         </div>
       </div>
     </div>
