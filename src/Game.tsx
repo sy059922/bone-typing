@@ -2,6 +2,7 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {BoneStage, type StageItem} from './components/BoneStage';
 import {Keyboard} from './components/Keyboard';
 import type {Bone} from './data/bones';
+import {NATIVE_NAME, NATIVE_SENTENCE, toNative} from './data/native';
 import {modeOf, type Category, type Kind, type Mode} from './lib/modes';
 import {scoreOf} from './lib/ranking';
 import {sfxBackspace, sfxBad, sfxFinish, sfxKey, sfxWord} from './lib/sound';
@@ -22,9 +23,16 @@ const shuffle = <T,>(a: T[]) => {
   return b;
 };
 
-const targetOf = (b: Bone, lang: Lang, kind: Kind) => (kind === 'sentence' ? b.sentence[lang] : lang === 'ko' ? b.ko : b.en);
+export type Term = 'hanja' | 'native';
+// 한글 이름: 한자어(쇄골) 또는 우리말(빗장뼈)
+export const koName = (b: Bone, term: Term) => (term === 'native' ? NATIVE_NAME[b.id] ?? b.ko : b.ko);
+const targetOf = (b: Bone, lang: Lang, kind: Kind, term: Term) => {
+  if (lang === 'en') return kind === 'sentence' ? b.sentence.en : b.en;
+  if (kind === 'word') return koName(b, term);
+  return term === 'native' ? NATIVE_SENTENCE[b.id] ?? toNative(b.sentence.ko) : b.sentence.ko;
+};
 
-export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; blind: boolean; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, blind, onDone, onQuit}) => {
+export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; term: Term; blind: boolean; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, term, blind, onDone, onQuit}) => {
   const queue = useMemo(() => shuffle(pool).slice(0, ROUND[kind]), [kind, pool]);
   const [idx, setIdx] = useState(0);
   const [value, setValue] = useState('');
@@ -56,7 +64,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     const slot = i < at - 1 ? 'gone' : i === at - 1 ? 'prev' : i === at ? 'cur' : 'next';
     items.push({key: `${queue[i].id}-${i}`, model: queue[i].model, slot});
   }
-  const target = targetOf(bone, lang, kind);
+  const target = targetOf(bone, lang, kind, term);
   const st = check(target, kind === 'word' ? value.trim() : value, lang);
 
   // 진행 중 타수 갱신용
@@ -194,7 +202,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   const typed = [...value];
   const ghost = [...target].slice(typed.length);
   const tag = bone.tag ? ` (${bone.tag[lang]})` : '';
-  const sub = lang === 'ko' ? `${bone.en}${bone.tag ? ` · ${bone.tag.en}` : ''}` : `${bone.ko}${bone.tag ? ` (${bone.tag.ko})` : ''}`;
+  const sub = lang === 'ko' ? `${bone.en}${bone.tag ? ` · ${bone.tag.en}` : ''}` : `${koName(bone, term)}${bone.tag ? ` (${bone.tag.ko})` : ''}`;
 
   return (
     <div className="game" onClick={() => input.current?.focus()}>
@@ -235,7 +243,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
           {kind === 'sentence' ? (
             <>
               <span className="bone-name">
-                {lang === 'ko' ? bone.ko : bone.en}
+                {lang === 'ko' ? koName(bone, term) : bone.en}
                 {tag}
               </span>
               <span className="bone-sub">{sub}</span>

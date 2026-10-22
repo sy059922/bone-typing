@@ -3,7 +3,7 @@ import {BoneStage, preloadModels} from './components/BoneStage';
 import {BONES} from './data/bones';
 import {MUSCLES} from './data/muscles';
 import {modeLabel, modeOf, parseMode, type Category} from './lib/modes';
-import {Game, type Kind, type Result} from './Game';
+import {Game, type Kind, type Result, type Term} from './Game';
 import {ResultModal} from './components/ResultModal';
 import {SoundToggle} from './components/SoundToggle';
 import {checkNickname, formatCode, getShared, getToken, isShared, newToken, parseCode, setToken, submitScore, topScores, type Mode, type Score} from './lib/ranking';
@@ -62,6 +62,22 @@ const IDLE_MUSCLE = [{key: 'title-quads', model: MUSCLES.find((b) => b.id === 'q
 export default function App() {
   const [screen, setScreen] = useState<'title' | 'game'>('title');
   const [cat, setCat] = useState<Category>('bone');
+  // 한글 용어: 한자어(쇄골) · 우리말(빗장뼈) — 이 브라우저에 기억
+  const [term, setTermState] = useState<Term>(() => {
+    try {
+      return localStorage.getItem('bone-typing:term') === 'native' ? 'native' : 'hanja';
+    } catch {
+      return 'hanja';
+    }
+  });
+  const setTerm = (t: Term) => {
+    setTermState(t);
+    try {
+      localStorage.setItem('bone-typing:term', t);
+    } catch {
+      /* 무시 */
+    }
+  };
   const [blind, setBlindState] = useState(() => {
     try {
       return localStorage.getItem('bone-typing:blind') === '1';
@@ -235,7 +251,7 @@ export default function App() {
   if (screen === 'game')
     return (
       <>
-        <Game key={round} cat={cat} pool={cat === 'muscle' ? MUSCLES : BONES} lang={lang} kind={kind} blind={blind} onDone={done} onQuit={() => setScreen('title')} />
+        <Game key={round} cat={cat} pool={cat === 'muscle' ? MUSCLES : BONES} lang={lang} kind={kind} term={term} blind={blind} onDone={done} onQuit={() => setScreen('title')} />
         {result ? (
           <ResultModal
             result={result}
@@ -298,6 +314,16 @@ export default function App() {
                 English
               </button>
             </div>
+            {lang === 'ko' ? (
+              <div className="seg term">
+                <button className={term === 'hanja' ? 'on' : ''} onClick={() => setTerm('hanja')}>
+                  한자어 <small>쇄골</small>
+                </button>
+                <button className={term === 'native' ? 'on' : ''} onClick={() => setTerm('native')}>
+                  우리말 <small>빗장뼈</small>
+                </button>
+              </div>
+            ) : null}
             <div className="seg">
               <button className={kind === 'word' ? 'on' : ''} onClick={() => setKind('word')}>
                 낱말 연습

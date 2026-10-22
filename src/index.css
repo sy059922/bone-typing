@@ -877,3 +877,9 @@ button {
   background: var(--line2);
   color: var(--sub);
 }
+.seg.term small {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.6;
+}
