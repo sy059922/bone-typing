@@ -88,7 +88,7 @@ export const ResultModal: React.FC<{
         </div>
         {best ? <div className="modal-best">NEW BEST</div> : null}
         <div className="modal-score">{shown}</div>
-        <div className="modal-sub">점수 = 타수 × 정확도²</div>
+        <div className="modal-sub">점수 = 타수 × 정확도²{result.passes ? ` · 패스 ${result.passes}개 (오타로 계산)` : ''}</div>
         <div className="result-grid">
           <div>
             <b>{result.cpm}</b>

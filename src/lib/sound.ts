@@ -133,6 +133,14 @@ export function sfxBad(at?: number) {
   hiss(t, 0.16, 0.22, sfxBus, 'lowpass', 900);
 }
 
+// 패스: 낮게 미끄러지는 '휘익'
+export function sfxPass(at?: number) {
+  if (!ctx || !prefs.sfx) return;
+  const t = at ?? ctx.currentTime;
+  tone({wave: 'p25', f0: 660, f1: 165, t, dur: 0.28, vol: 0.2, bus: sfxBus});
+  hiss(t, 0.25, 0.16, sfxBus, 'bandpass', 1200);
+}
+
 // 낱말 성공: 콤보가 높을수록 높은 음에서 시작하는 아르페지오 + '챙'
 export function sfxWord(combo = 0, at?: number) {
   if (!ctx || !prefs.sfx) return;

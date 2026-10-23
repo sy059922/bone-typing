@@ -947,3 +947,35 @@ button {
     font-size: 76px;
   }
 }
+
+/* 패스 */
+.hint {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+}
+.pass-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--sub);
+  background: transparent;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.pass-btn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--sub);
+}
+.pass-btn kbd {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  margin-left: 4px;
+}
+.line.passing .ch.ghost {
+  color: var(--sub);
+  text-decoration: line-through 2px var(--dim);
+}

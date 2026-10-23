@@ -5,12 +5,12 @@ import type {Bone} from './data/bones';
 import {NATIVE_NAME, NATIVE_SENTENCE, toNative} from './data/native';
 import {modeOf, type Category, type Kind, type Mode} from './lib/modes';
 import {scoreOf} from './lib/ranking';
-import {sfxBackspace, sfxBad, sfxFinish, sfxKey, sfxWord} from './lib/sound';
+import {sfxBackspace, sfxBad, sfxFinish, sfxKey, sfxPass, sfxWord} from './lib/sound';
 import {check, units, type Lang} from './lib/typing';
 import {SoundToggle} from './components/SoundToggle';
 
 export type {Kind};
-export type Result = {mode: Mode; cpm: number; accuracy: number; items: number; duration_ms: number; score: number};
+export type Result = {mode: Mode; cpm: number; accuracy: number; items: number; duration_ms: number; score: number; passes?: number};
 
 const ROUND = {word: 20, sentence: 8};
 
@@ -41,6 +41,8 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   const [ended, setEnded] = useState(false);
   // 블라인드 모드: 정답 글씨를 숨기고, 틀린 문제에서만 보여 줌 (다음 문제부터 다시 숨김)
   const [revealed, setRevealed] = useState(false);
+  const [passing, setPassing] = useState(false);
+  const passes = useRef(0);
   const hide = blind && !revealed;
   const endedRef = useRef(false);
   endedRef.current = ended;
@@ -112,7 +114,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   }, []);
 
   const onChange = (v: string) => {
-    if (ended) return;
+    if (ended || passing) return;
     if (!keySinceSubmit.current) {
       // 이전 문제의 조합 글자가 다시 들어온 것 — 지우고 무시
       if (input.current) input.current.value = '';
@@ -139,28 +141,11 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     const ms = Math.max(1, performance.now() - (s.start || performance.now()));
     const cpm = Math.round((s.units / ms) * 60000);
     const accuracy = Math.round((s.units / Math.max(1, s.units + s.errors)) * 10000) / 100;
-    onDone({mode: modeOf(cat, lang, kind), cpm, accuracy, items: queue.length, duration_ms: Math.round(ms), score: scoreOf(cpm, accuracy)});
+    onDone({mode: modeOf(cat, lang, kind), cpm, accuracy, items: queue.length, duration_ms: Math.round(ms), score: scoreOf(cpm, accuracy), passes: passes.current});
   }, [cat, lang, kind, queue.length, onDone]);
 
-  const submit = useCallback(() => {
-    const v = kind === 'word' ? value.trim() : value.replace(/\s+$/, '');
-    if (v !== target) {
-      if (v.length) {
-        stats.current.errors++;
-        stats.current.clean = false;
-      }
-      flashBad();
-      sfxBad();
-      setRevealed(true);
-      return;
-    }
-    stats.current.units += units(target, lang).length + (kind === 'word' ? 1 : 1); // 확정 키(스페이스·엔터)까지
-    const nextCombo = stats.current.clean ? combo + 1 : 0;
-    setCombo(nextCombo);
-    sfxWord(nextCombo);
-    stats.current.clean = true;
-    lastOk.current = true;
-    setBursts((b) => [...b.slice(-4), performance.now()]);
+  // 다음 문제로 (맞힘 · 패스 공통)
+  const advance = useCallback(() => {
     // 한글 조합을 강제로 끝내고(포커스 잠깐 빼기) 비움 — 다음 문제로 글자가 넘어가지 않게
     keySinceSubmit.current = false;
     const el = input.current;
@@ -181,11 +166,58 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     }
     setIdx(next);
     setRevealed(false);
-  }, [value, target, kind, lang, idx, queue, finish, flashBad, combo]);
+  }, [idx, queue, finish]);
+
+  const submit = useCallback(() => {
+    const v = kind === 'word' ? value.trim() : value.replace(/\s+$/, '');
+    if (v !== target) {
+      if (v.length) {
+        stats.current.errors++;
+        stats.current.clean = false;
+      }
+      flashBad();
+      sfxBad();
+      setRevealed(true);
+      return;
+    }
+    stats.current.units += units(target, lang).length + (kind === 'word' ? 1 : 1); // 확정 키(스페이스·엔터)까지
+    const nextCombo = stats.current.clean ? combo + 1 : 0;
+    setCombo(nextCombo);
+    sfxWord(nextCombo);
+    stats.current.clean = true;
+    lastOk.current = true;
+    setBursts((b) => [...b.slice(-4), performance.now()]);
+    advance();
+  }, [value, target, kind, lang, finish, flashBad, combo, advance]);
+
+  // 패스: 그 낱말의 글자(자모) 수만큼 오타로 치고, 정답을 1초 보여 준 뒤 넘어감
+  const pass = useCallback(() => {
+    if (ended || passing) return;
+    stats.current.errors += units(target, lang).length;
+    stats.current.clean = false;
+    passes.current++;
+    setCombo(0);
+    sfxPass();
+    setPassing(true);
+    setRevealed(true);
+    keySinceSubmit.current = false;
+    if (input.current) input.current.value = '';
+    setValue('');
+    setTimeout(() => {
+      setPassing(false);
+      advance();
+    }, 1000);
+  }, [ended, passing, target, lang, advance]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (ended) {
+    if (ended || passing) {
       e.preventDefault();
+      return;
+    }
+    // Tab = 패스
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      pass();
       return;
     }
     // Space 는 끝까지 다 친 뒤에 확정 — 문장은 마침표 뒤 Space 로 다음 문장, 낱말은 띄어쓰기 없는 낱말이면 언제든
@@ -217,7 +249,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   void tick;
 
   const typed = [...value];
-  const ghost = [...target].slice(typed.length);
+  const ghost = passing ? [...target] : [...target].slice(typed.length);
   const tag = bone.tag ? ` (${bone.tag[lang]})` : '';
   const sub = lang === 'ko' ? `${bone.en}${bone.tag ? ` · ${bone.tag.en}` : ''}` : `${koName(bone, term)}${bone.tag ? ` (${bone.tag.ko})` : ''}`;
 
@@ -271,7 +303,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
         </div>
       </div>
 
-      <div className={`line ${kind} ${bad ? 'shake' : ''}`} data-target={target}>
+      <div className={`line ${kind} ${bad ? 'shake' : ''} ${passing ? 'passing' : ''}`} data-target={target}>
         {typed.map((ch, i) => (
           <span key={i} className={`ch ${st.charStates[i] ?? 'bad'}`}>
             {ch === ' ' ? ' ' : ch}
@@ -303,6 +335,9 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
         />
       </div>
       <div className="hint">
+        <button className="pass-btn" onClick={pass} disabled={ended || passing}>
+          {passing ? 'PASS' : '패스'} <kbd>Tab</kbd>
+        </button>
         {latinWarn ? <span className="warn">한/영 키를 눌러 한글 입력으로 바꿔 주세요</span> : <span className="hint-keys">{kind === 'word' ? 'Space 또는 Enter 로 확정' : '마침표까지 치고 Space 또는 Enter 로 다음 문장'}</span>}
         <span className="hint-touch">글자를 누르면 키보드가 열려요 · 확정은 띄어쓰기/엔터</span>
       </div>
@@ -310,7 +345,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
       <Keyboard
         lang={lang}
         pressed={pressed}
-        next={!st.ok ? ['Backspace', false] : hide ? null : st.nextKey ?? (st.doneUnits === st.totalUnits ? [kind === 'word' ? 'Space' : 'Enter', false] : null)}
+        next={passing ? null : !st.ok ? ['Backspace', false] : hide ? null : st.nextKey ?? (st.doneUnits === st.totalUnits ? [kind === 'word' ? 'Space' : 'Enter', false] : null)}
         flashBad={bad}
       />
     </div>
