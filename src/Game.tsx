@@ -53,6 +53,8 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   const composing = useRef(false);
   const pendingSubmit = useRef(false);
   const lastOk = useRef(true);
+  // 확정 뒤 새 키를 누르기 전까지 들어오는 입력은 한글 입력기가 남긴 이전 글자 → 무시
+  const keySinceSubmit = useRef(true);
   const progress = useRef(0);
   progress.current = idx / queue.length;
 
@@ -78,6 +80,8 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     focus();
     const down = (e: KeyboardEvent) => {
       setPressed((p) => new Set(p).add(e.code || e.key));
+      // 확정 키(Space·Enter) 자체는 '새 입력'으로 치지 않음 — 이 키가 확정을 부른 뒤 여기에 도착하므로
+      if (!['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Enter', ' '].includes(e.key) && e.code !== 'Space') keySinceSubmit.current = true;
       // 타격음: 글자·띄어쓰기 키마다 (조합 중인 한글도 물리 키 기준이라 한 자 한 자 남)
       if (!e.repeat && !e.metaKey && !e.ctrlKey) {
         if (e.code === 'Backspace') sfxBackspace();
@@ -109,11 +113,17 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
 
   const onChange = (v: string) => {
     if (ended) return;
+    if (!keySinceSubmit.current) {
+      // 이전 문제의 조합 글자가 다시 들어온 것 — 지우고 무시
+      if (input.current) input.current.value = '';
+      setValue('');
+      return;
+    }
     if (!stats.current.start && v) stats.current.start = performance.now();
     // 한글 판인데 영문이 들어오면 한/영 안내
     setLatinWarn(lang === 'ko' && /[a-zA-Z]/.test(v));
     const c = check(target, kind === 'word' ? v.trim() : v, lang);
-    if (!c.ok && lastOk.current && v.length >= value.length) {
+    if (!c.ok && lastOk.current && v.length >= value.length && v.trim()) {
       stats.current.errors++;
       stats.current.clean = false;
       flashBad();
@@ -151,8 +161,15 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     stats.current.clean = true;
     lastOk.current = true;
     setBursts((b) => [...b.slice(-4), performance.now()]);
+    // 한글 조합을 강제로 끝내고(포커스 잠깐 빼기) 비움 — 다음 문제로 글자가 넘어가지 않게
+    keySinceSubmit.current = false;
+    const el = input.current;
+    if (el) {
+      el.blur();
+      el.value = '';
+      requestAnimationFrame(() => el.focus());
+    }
     setValue('');
-    if (input.current) input.current.value = '';
     const next = idx + 1;
     if (next >= queue.length) {
       setEnded(true);
