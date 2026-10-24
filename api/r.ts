@@ -10,10 +10,10 @@ export default async function handler(req: Request) {
   const id = u.searchParams.get('id');
   const s = await getScore(id);
   const origin = u.origin;
-  const title = s ? `${s.nickname}님 ${s.score}점 · 뼈이름으로 타자연습` : '뼈이름으로 타자연습';
+  const title = s ? `${s.nickname}님 ${s.score}점 · 뼈쟁이 타자연습` : '뼈쟁이 타자연습';
   const desc = s
     ? `${MODE_KO[s.mode]} ${s.cpm}타 · 정확도 ${s.accuracy.toFixed(1)}% · 전체 ${s.rank}위. 이 기록에 도전해 보세요!`
-    : '척추·팔·다리 뼈 48개를 3D로 보며 타자 연습. 랭킹에 도전해 보세요!';
+    : '뼈 48개 · 근육 83개를 3D로 보며 타자 연습. 랭킹에 도전해 보세요!';
   const image = s ? `${origin}/api/og?id=${id}` : `${origin}/og.png`;
   const dest = s ? `/?vs=${id}` : '/';
   const html = `<!doctype html>
@@ -31,7 +31,7 @@ export default async function handler(req: Request) {
 <meta name="twitter:card" content="summary_large_image" />
 <style>body{background:#0d0d0d;color:#ededed;font-family:sans-serif;display:grid;place-items:center;height:100vh;margin:0}a{color:#fff}</style>
 <script>location.replace(${JSON.stringify(dest)})</script>
-</head><body><a href="${dest}">뼈이름으로 타자연습 열기</a></body></html>`;
+</head><body><a href="${dest}">뼈쟁이 타자연습 열기</a></body></html>`;
   return new Response(html, {
     headers: {'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300, s-maxage=86400'},
   });

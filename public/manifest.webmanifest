@@ -1,0 +1,16 @@
+{
+  "name": "뼈쟁이 타자연습",
+  "short_name": "뼈쟁이타자연습",
+  "description": "척추·팔·다리 뼈와 근육 이름을 3D로 보며 익히는 타자연습",
+  "lang": "ko",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0D0D0D",
+  "theme_color": "#0D0D0D",
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

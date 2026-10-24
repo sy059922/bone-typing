@@ -244,3 +244,19 @@ export const BoneStage: React.FC<{items: StageItem[]; bad: boolean; bursts: numb
 );
 
 export const preloadModels = (files: string[]) => files.forEach((f) => useGLTF.preload(`/models/${f}.glb`, false, true));
+
+// 앱 아이콘 렌더용 (?icon): 손뼈를 손가락이 위로 오게 세워 살짝 기울임 — '안녕' 하고 흔드는 손
+export const IconStage: React.FC<{model: ModelRef}> = ({model}) => (
+  <Canvas camera={{position: [0, 0.05, 5.7], fov: 38}} dpr={1} gl={{antialias: true, preserveDrawingBuffer: true}}>
+    <color attach="background" args={['#0D0D0D']} />
+    <hemisphereLight args={['#FFFFFF', '#1A1A1A', 0.6]} />
+    <directionalLight position={[2, 4, 6]} intensity={2.6} color="#FFFFFF" />
+    <directionalLight position={[-4, 1, 2]} intensity={0.7} color="#FFFFFF" />
+    <directionalLight position={[0, 3, -6]} intensity={1.4} color="#FFFFFF" />
+    <group rotation={[0, 0, Math.PI - 0.2]}>
+      <Suspense fallback={null}>
+        <Model model={model} bad={false} dim={false} />
+      </Suspense>
+    </group>
+  </Canvas>
+);

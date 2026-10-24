@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {BoneStage, preloadModels} from './components/BoneStage';
+import {BoneStage, IconStage, preloadModels} from './components/BoneStage';
 import {BONES} from './data/bones';
 import {MUSCLES} from './data/muscles';
 import {modeLabel, modeOf, parseMode, type Category} from './lib/modes';
@@ -223,18 +223,28 @@ export default function App() {
   // 개발용: ?bone=<id> 로 뼈 하나만 띄워 3D 확인
   const peek = new URLSearchParams(location.search).get('bone');
   const peekBone = peek ? [...BONES, ...MUSCLES].find((b) => b.id === peek) : null;
+  // 개발용: ?icon 으로 앱 아이콘(손뼈 '안녕') 렌더
+  if (new URLSearchParams(location.search).has('icon')) {
+    const hand = BONES.find((b) => b.id === 'phalanges')!.model;
+    const all = [...new Set([...(hand.show ?? []), ...hand.hl])];
+    return (
+      <div style={{width: '100vw', height: '100vh'}}>
+        <IconStage model={{file: 'hand', hl: all}} />
+      </div>
+    );
+  }
   // 개발용: ?og 로 링크 미리보기 그림(1200×630) 화면
   if (new URLSearchParams(location.search).has('og'))
     return (
       <div className="og">
         <div className="og-text">
           <div className="logo">
-            뼈이름으로
+            뼈쟁이
             <br />
             <span className="logo-king">타자연습</span>
             <span className="logo-sub">BONE NAME TYPING</span>
           </div>
-          <div className="og-desc">척추 · 팔 · 다리 뼈 48개를 3D로 보며 타자 연습 · 랭킹 도전</div>
+          <div className="og-desc">뼈 48개 · 근육 83개를 3D로 보며 타자 연습 · 랭킹 도전</div>
         </div>
         <div className="og-stage">
           <BoneStage items={IDLE} bad={false} bursts={[]} />
@@ -288,7 +298,7 @@ export default function App() {
         {screen === 'title' ? (
           <>
             <div className="logo">
-              뼈이름으로
+              뼈쟁이
               <br />
               <span className="logo-king">타자연습</span>
               <span className="logo-sub">{cat === 'muscle' ? 'BONE NAME TYPING · MUSCLE EDITION' : 'BONE NAME TYPING'}</span>

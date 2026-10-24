@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     [`${s.accuracy.toFixed(1)}%`, '정확도'],
     [`${s.rank}위`, '전체 순위'],
   ];
-  const krText = `뼈이름으로타자연습${s.nickname}${MODE_KO[s.mode]}님의기록이에도전해보세요타수정확도전체순위위·`;
+  const krText = `뼈쟁이타자연습${s.nickname}${MODE_KO[s.mode]}님의기록이에도전해보세요타수정확도전체순위위·`;
   const monoText = `0123456789.%,CPMBONENAMETYPINGbone-typing.vercelapp@iamnotwoodz${s.nickname}`;
   const [kr900, kr500, mono] = await Promise.all([
     font('Noto+Sans+KR', 900, krText),
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
     h(
       {display: 'flex', flexDirection: 'column', padding: '52px 0 0 80px', width: 700},
       h({fontFamily: 'Mono', fontSize: 22, letterSpacing: 4, color: '#5C5C5C'}, 'BONE NAME TYPING'),
-      h({fontSize: 40, fontWeight: 900, marginTop: 10, color: '#FFFFFF'}, '뼈이름으로 타자연습'),
+      h({fontSize: 40, fontWeight: 900, marginTop: 10, color: '#FFFFFF'}, '뼈쟁이 타자연습'),
       h({fontSize: 34, fontWeight: 500, marginTop: 44, color: '#9A9A9A'}, `${s.nickname}님의 기록 · ${MODE_KO[s.mode]}`),
       h({fontFamily: 'Mono', fontSize: 170, lineHeight: 1, marginTop: 10, color: '#FFFFFF', letterSpacing: -6}, String(s.score)),
       h(

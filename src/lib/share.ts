@@ -8,7 +8,7 @@ export const SITE = 'https://bone-typing.vercel.app';
 export const shareUrl = (id: number | null) => (id ? `${SITE}/r/${id}` : SITE);
 
 export const shareText = (r: Result, nick: string, rank: number | null, id: number | null = null) =>
-  `🦴 뼈이름으로 타자연습${r.mode.startsWith('m-') ? ' · 근육편' : ''}\n${nick} · ${modeShort(r.mode)} ${r.score}점 (${r.cpm}타 · 정확도 ${r.accuracy.toFixed(1)}%)${rank ? ` · 전체 ${rank}위` : ''}\n나도 도전하기 👉 ${shareUrl(id)}`;
+  `🦴 뼈쟁이 타자연습${r.mode.startsWith('m-') ? ' · 근육편' : ''}\n${nick} · ${modeShort(r.mode)} ${r.score}점 (${r.cpm}타 · 정확도 ${r.accuracy.toFixed(1)}%)${rank ? ` · 전체 ${rank}위` : ''}\n나도 도전하기 👉 ${shareUrl(id)}`;
 
 // 결과 카드 그림 (1080×1350, 인스타·카톡 공유용) — 게임과 같은 무채색
 export async function resultCard(r: Result, nick: string, rank: number | null): Promise<Blob> {
@@ -32,7 +32,7 @@ export async function resultCard(r: Result, nick: string, rank: number | null): 
   g.fillText('BONE NAME TYPING', 90, 140);
   g.fillStyle = '#EDEDED';
   g.font = `900 84px ${sans}`;
-  g.fillText('뼈이름으로', 90, 250);
+  g.fillText('뼈쟁이', 90, 250);
   g.fillStyle = '#FFFFFF';
   g.fillText('타자연습', 90, 350);
   g.fillStyle = '#9A9A9A';
@@ -76,7 +76,7 @@ export const canSystemShare = () => typeof navigator.share === 'function';
 // 시스템 공유창 (폰: 카카오톡·인스타·메시지 … / 맥: 메시지·AirDrop …) — 링크를 보내면 받는 쪽에 내 기록 썸네일이 뜸
 export async function systemShare(r: Result, nick: string, rank: number | null, id: number | null): Promise<'shared' | 'cancelled' | 'failed'> {
   try {
-    await navigator.share({title: `${nick}님 ${r.score}점 · 뼈이름으로 타자연습`, text: shareText(r, nick, rank, null).split('\n').slice(0, 2).join('\n'), url: shareUrl(id)});
+    await navigator.share({title: `${nick}님 ${r.score}점 · 뼈쟁이 타자연습`, text: shareText(r, nick, rank, null).split('\n').slice(0, 2).join('\n'), url: shareUrl(id)});
     return 'shared';
   } catch (e) {
     return (e as DOMException).name === 'AbortError' ? 'cancelled' : 'failed';
