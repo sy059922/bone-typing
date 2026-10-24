@@ -352,6 +352,13 @@ export default function App() {
             <input
               className="nick-input"
               placeholder="닉네임 (12자까지)"
+              name="bone-nickname"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-form-type="other"
+              onBlur={() => window.scrollTo({top: 0, behavior: 'smooth'})}
               maxLength={12}
               value={nick}
               onChange={(e) => {

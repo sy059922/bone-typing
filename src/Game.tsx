@@ -323,12 +323,17 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
           ref={input}
           className="sink"
           value={value}
-          autoComplete="off"
+          autoComplete="one-time-code"
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck={false}
           lang={lang === 'ko' ? 'ko' : 'en'}
           enterKeyHint="next"
+          name="bone-answer"
+          id="bone-answer"
+          aria-autocomplete="none"
+          data-form-type="other"
+          data-lpignore="true"
           inputMode="text"
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
