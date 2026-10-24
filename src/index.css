@@ -563,8 +563,93 @@ button {
   .progress {
     margin: 0 14px;
   }
-  .game .line {
-    margin-bottom: 40vh;
+  /* 화면 키보드를 뺀 보이는 높이만 씀 → 입력줄이 키보드 바로 위에 붙음 */
+  .game {
+    height: var(--app-h, 100dvh);
+    overflow: hidden;
+  }
+  .hud {
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+  }
+  .hud .sound-toggle {
+    display: none;
+  }
+  .hud-stats {
+    justify-content: center;
+    font-size: 10px;
+  }
+  .hud-stats b {
+    font-size: 18px;
+  }
+  .stage {
+    min-height: 120px;
+  }
+  .bone-label {
+    bottom: 2px;
+  }
+  .line {
+    margin: 2px 0 0;
+  }
+  .hint {
+    padding-bottom: 8px;
+  }
+  .hint-touch {
+    font-size: 10px;
+  }
+  .pass-btn kbd {
+    display: none;
+  }
+
+  /* 타이틀: 이름 → 닉네임 → 시작이 먼저 보이게 순서를 바꾸고 3D 를 줄임 */
+  .title {
+    grid-template-rows: 26vh auto;
+    height: auto;
+    min-height: 100%;
+  }
+  .title-panel {
+    overflow: visible;
+    padding: 24px 20px 20px;
+    gap: 10px;
+  }
+  .title-panel > .logo {
+    order: 0;
+    font-size: 34px;
+    margin-bottom: 6px;
+  }
+  .title-panel > .vs {
+    order: 1;
+  }
+  .title-panel > .nick-input {
+    order: 2;
+  }
+  .title-panel > .claim {
+    order: 3;
+  }
+  .title-panel > .start {
+    order: 4;
+  }
+  .title-panel > .link-btn {
+    order: 5;
+  }
+  .title-panel > .seg {
+    order: 6;
+  }
+  .title-panel > .blind-toggle {
+    order: 7;
+  }
+  .title-panel > .sound-toggle {
+    order: 8;
+  }
+  .title-panel > .board {
+    order: 9;
+  }
+  .title-panel > .credit {
+    order: 10;
+  }
+  .seg button {
+    padding: 9px 0;
+    font-size: 14px;
   }
 }
 

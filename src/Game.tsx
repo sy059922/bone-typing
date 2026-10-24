@@ -57,6 +57,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   const lastOk = useRef(true);
   // 확정 뒤 새 키를 누르기 전까지 들어오는 입력은 한글 입력기가 남긴 이전 글자 → 무시
   const keySinceSubmit = useRef(true);
+  const submittedAt = useRef(0);
   const progress = useRef(0);
   progress.current = idx / queue.length;
 
@@ -115,7 +116,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
 
   const onChange = (v: string) => {
     if (ended || passing) return;
-    if (!keySinceSubmit.current) {
+    if (!keySinceSubmit.current && performance.now() - submittedAt.current < 200) {
       // 이전 문제의 조합 글자가 다시 들어온 것 — 지우고 무시
       if (input.current) input.current.value = '';
       setValue('');
@@ -148,6 +149,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   const advance = useCallback(() => {
     // 한글 조합을 강제로 끝내고(포커스 잠깐 빼기) 비움 — 다음 문제로 글자가 넘어가지 않게
     keySinceSubmit.current = false;
+    submittedAt.current = performance.now();
     const el = input.current;
     if (el) {
       el.blur();
@@ -201,6 +203,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     setPassing(true);
     setRevealed(true);
     keySinceSubmit.current = false;
+    submittedAt.current = performance.now();
     if (input.current) input.current.value = '';
     setValue('');
     setTimeout(() => {
@@ -325,6 +328,8 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
           autoCapitalize="off"
           spellCheck={false}
           lang={lang === 'ko' ? 'ko' : 'en'}
+          enterKeyHint="next"
+          inputMode="text"
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
           onCompositionStart={() => (composing.current = true)}
