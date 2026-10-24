@@ -6,7 +6,7 @@ import {NATIVE_NAME, NATIVE_SENTENCE, toNative} from './data/native';
 import {modeOf, type Category, type Kind, type Mode} from './lib/modes';
 import {scoreOf} from './lib/ranking';
 import {sfxBackspace, sfxBad, sfxFinish, sfxKey, sfxPass, sfxWord} from './lib/sound';
-import {check, units, type Lang} from './lib/typing';
+import {check, norm, units, type Lang} from './lib/typing';
 import {SoundToggle} from './components/SoundToggle';
 
 export type {Kind};
@@ -187,7 +187,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
 
   const submit = useCallback(() => {
     const v = kind === 'word' ? value.trim() : value.replace(/\s+$/, '');
-    if (v !== target) {
+    if (norm(v, lang) !== norm(target, lang)) {
       if (v.length) {
         stats.current.errors++;
         stats.current.clean = false;
@@ -240,7 +240,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     }
     // Space 는 끝까지 다 친 뒤에 확정 — 문장은 마침표 뒤 Space 로 다음 문장, 낱말은 띄어쓰기 없는 낱말이면 언제든
     const isSpace = e.key === ' ' || e.code === 'Space';
-    const spaceSubmit = isSpace && (value.trim() === target || (kind === 'word' && !target.includes(' ')));
+    const spaceSubmit = isSpace && (norm(value.trim(), lang) === norm(target, lang) || (kind === 'word' && !target.includes(' ')));
     const isSubmit = e.key === 'Enter' || spaceSubmit;
     if (e.key === 'Escape') onQuit();
     if (!isSubmit) return;

@@ -40,8 +40,13 @@ export type Check = {
   charStates: ('done' | 'cur' | 'bad' | 'todo')[]; // 목표 글자별 상태 (흐린 글씨 위 덮기)
 };
 
+// 영어는 대소문자를 구분하지 않음 (’ 같은 꼬부랑 따옴표도 ' 로)
+export const norm = (s: string, lang: Lang) => (lang === 'en' ? s.toLowerCase().replace(/[’‘]/g, "'") : s);
+
 // 입력 중인 값(조합 중 글자 포함)을 목표와 비교
-export const check = (target: string, value: string, lang: Lang): Check => {
+export const check = (rawTarget: string, rawValue: string, lang: Lang): Check => {
+  const target = norm(rawTarget, lang);
+  const value = norm(rawValue, lang);
   const tu = units(target, lang);
   const vu = units(value, lang);
   let same = 0;
