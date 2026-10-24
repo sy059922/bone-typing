@@ -27,7 +27,7 @@ const ROWS: K[][] = [
     {code: 'KeyV', en: 'V', ko: 'ㅍ'}, {code: 'KeyB', en: 'B', ko: 'ㅠ'}, {code: 'KeyN', en: 'N', ko: 'ㅜ'}, {code: 'KeyM', en: 'M', ko: 'ㅡ'},
     {code: 'Comma', en: ','}, {code: 'Period', en: '.'}, {code: 'Slash', en: '/'}, {code: 'ShiftRight', en: 'Shift', w: 2.4},
   ],
-  [{code: 'Lang', en: getUi() === 'en' ? 'Lang' : '한/영', w: 1.6}, {code: 'Space', en: '', w: 8}, {code: 'Lang2', en: '', w: 1.6}],
+  [{code: 'Lang', en: '한/영', w: 1.6}, {code: 'Space', en: '', w: 8}, {code: 'Lang2', en: '', w: 1.6}],
 ];
 
 const HOME = new Set(['KeyF', 'KeyJ']);
@@ -41,7 +41,7 @@ export const Keyboard: React.FC<{lang: Lang; pressed: Set<string>; next: [string
           {row.map((k) => {
             const isNext = next && (next[0] === k.code || (next[1] && (k.code === 'ShiftLeft' || k.code === 'ShiftRight')));
             const down = pressed.has(k.code) || (k.code === 'Lang' && (pressed.has('Lang1') || pressed.has('AltRight')));
-            const label = lang === 'ko' && k.ko ? (shiftOn && k.koS ? k.koS : k.ko) : k.en;
+            const label = k.code === 'Lang' ? (getUi() === 'en' ? 'Lang' : '한/영') : lang === 'ko' && k.ko ? (shiftOn && k.koS ? k.koS : k.ko) : k.en;
             return (
               <div key={k.code} className={`key ${down ? 'down' : ''} ${isNext ? 'next' : ''} ${HOME.has(k.code) ? 'home' : ''}`} style={{flex: k.w ?? 1}}>
                 <span className="key-main">{label}</span>
