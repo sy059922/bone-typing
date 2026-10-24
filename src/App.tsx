@@ -378,7 +378,6 @@ export default function App() {
               autoCapitalize="off"
               spellCheck={false}
               data-form-type="other"
-              onBlur={() => window.scrollTo({top: 0, behavior: 'smooth'})}
               maxLength={12}
               value={nick}
               onChange={(e) => {

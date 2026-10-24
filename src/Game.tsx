@@ -76,6 +76,14 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   const target = targetOf(bone, lang, kind, term);
   const st = check(target, kind === 'word' ? value.trim() : value, lang);
 
+  // 게임 중에는 페이지 자체가 스크롤되지 않게 (키보드 대응 · 타이틀은 자유 스크롤)
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('in-game');
+    window.scrollTo(0, 0);
+    return () => root.classList.remove('in-game');
+  }, []);
+
   // 진행 중 타수 갱신용
   useEffect(() => {
     const t = setInterval(() => setTick((x) => x + 1), 500);

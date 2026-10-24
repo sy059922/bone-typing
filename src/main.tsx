@@ -12,7 +12,8 @@ if (import.meta.env.DEV) (window as unknown as {renderDemo: typeof renderDemo}).
 const vv = window.visualViewport;
 const syncHeight = () => {
   document.documentElement.style.setProperty('--app-h', `${Math.round(vv ? vv.height : window.innerHeight)}px`);
-  if (vv && vv.offsetTop > 0) window.scrollTo(0, 0);
+  // 게임 중에만: 화면 키보드 때문에 페이지가 밀리면 원위치 (타이틀 화면은 자유롭게 스크롤)
+  if (vv && vv.offsetTop > 0 && document.documentElement.classList.contains('in-game')) window.scrollTo(0, 0);
 };
 syncHeight();
 vv?.addEventListener('resize', syncHeight);

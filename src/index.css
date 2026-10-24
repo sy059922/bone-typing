@@ -1064,3 +1064,10 @@ button {
   color: var(--sub);
   text-decoration: line-through 2px var(--dim);
 }
+
+/* 게임 중에는 페이지 스크롤 잠금 (화면 키보드가 페이지를 밀어 올리지 않게) */
+html.in-game,
+html.in-game body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
