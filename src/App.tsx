@@ -344,6 +344,7 @@ export default function App() {
                 English
               </button>
             </div>
+            {lang === 'en' ? <div className="note">Aa 대소문자 구분 없이 쳐도 돼요</div> : null}
             {lang === 'ko' ? (
               <div className="seg term">
                 <button className={term === 'hanja' ? 'on' : ''} onClick={() => setTerm('hanja')}>

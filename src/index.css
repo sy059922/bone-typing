@@ -1071,3 +1071,14 @@ html.in-game body {
   overflow: hidden;
   overscroll-behavior: none;
 }
+.note {
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: -4px;
+  padding-left: 4px;
+}
+@media (max-width: 640px), (pointer: coarse) and (max-width: 1024px) {
+  .title-panel > .note {
+    order: 6;
+  }
+}

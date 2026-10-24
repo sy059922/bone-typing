@@ -322,11 +322,15 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
       </div>
 
       <div className={`line ${kind} ${bad ? 'shake' : ''} ${passing ? 'passing' : ''}`} data-target={target}>
-        {typed.map((ch, i) => (
-          <span key={i} className={`ch ${st.charStates[i] ?? 'bad'}`}>
-            {ch === ' ' ? ' ' : ch}
-          </span>
-        ))}
+        {typed.map((ch, i) => {
+          // 맞게 친 글자는 정답 모양으로 (영어: 소문자로 쳐도 대문자로 채워짐 → 대소문자 상관없음을 보여 줌)
+          const shown = st.charStates[i] === 'done' ? ([...target][i] ?? ch) : ch;
+          return (
+            <span key={i} className={`ch ${st.charStates[i] ?? 'bad'}`}>
+              {shown === ' ' ? '\u00A0' : shown}
+            </span>
+          );
+        })}
         <span className="caret" />
         {(hide ? [] : ghost).map((ch, i) => (
           <span key={`g${i}`} className="ch ghost">
@@ -363,8 +367,11 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
         <button className="pass-btn" onClick={pass} disabled={ended || passing}>
           {passing ? 'PASS' : '패스'} <kbd>Tab</kbd>
         </button>
-        {latinWarn ? <span className="warn">한/영 키를 눌러 한글 입력으로 바꿔 주세요</span> : <span className="hint-keys">{kind === 'word' ? 'Space 또는 Enter 로 확정' : '마침표까지 치고 Space 또는 Enter 로 다음 문장'}</span>}
-        <span className="hint-touch">글자를 누르면 키보드가 열려요 · 확정은 띄어쓰기/엔터</span>
+        {latinWarn ? <span className="warn">한/영 키를 눌러 한글 입력으로 바꿔 주세요</span> : <span className="hint-keys">
+            {lang === 'en' ? '대소문자 구분 없음 · ' : ''}
+            {kind === 'word' ? 'Space 또는 Enter 로 확정' : '마침표까지 치고 Space 또는 Enter 로 다음 문장'}
+          </span>}
+        <span className="hint-touch">{lang === 'en' ? '대소문자 구분 없음 · ' : ''}글자를 누르면 키보드가 열려요 · 확정은 띄어쓰기/엔터</span>
       </div>
 
       <Keyboard
