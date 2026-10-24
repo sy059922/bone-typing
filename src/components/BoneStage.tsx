@@ -139,15 +139,28 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
     holder.add(group);
     group.updateMatrixWorld(true);
     // 근육 모드는 강조할 근육 기준으로 확대 (맥락 뼈는 화면 밖으로 넘어가도 됨)
+    const span = (b: THREE.Box3) => {
+      const s = b.getSize(new THREE.Vector3());
+      return Math.max(s.x, s.y, s.z * 0.8, 1e-6);
+    };
     const box = new THREE.Box3();
+    let frame: number;
     if (isMuscle || compact) {
       group.children.forEach((c) => c.userData.hl && box.expandByObject(c));
-      const grow = box.getSize(new THREE.Vector3()).multiplyScalar(isMuscle ? 0.18 : 0.35);
-      box.expandByVector(grow);
-    } else box.setFromObject(group);
-    const size = box.getSize(new THREE.Vector3());
+      const hlSpan = span(box);
+      if (isMuscle) frame = hlSpan * 1.36;
+      else {
+        // 폰: 작은 뼈(슬개골·족근골·두상골)도 주변 뼈가 보이게 — 뼈 크기의 3배 또는 전체의 60% 중 큰 쪽, 너무 멀어지진 않게
+        const allSpan = span(new THREE.Box3().setFromObject(group));
+        frame = Math.max(hlSpan * 3, Math.min(allSpan * 0.6, hlSpan * 6));
+        frame = Math.min(frame, Math.max(allSpan * 1.05, hlSpan * 1.7));
+      }
+    } else {
+      box.setFromObject(group);
+      frame = span(box);
+    }
     const center = box.getCenter(new THREE.Vector3());
-    const k = 3.0 / Math.max(size.x, size.y, size.z * 0.8, 1e-6);
+    const k = 3.0 / frame;
     holder.scale.setScalar(k);
     holder.position.copy(center.multiplyScalar(-k));
     const wrap = new THREE.Group();
