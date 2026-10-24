@@ -104,7 +104,7 @@ export const ResultModal: React.FC<{
           </div>
         </div>
         <div className="modal-rank">
-          {saved === 'saving' ? '랭킹에 올리는 중…' : saved === 'fail' ? failReason || '랭킹 저장에 실패했어요' : rank ? (
+          {saved === 'saving' ? '랭킹에 올리는 중…' : saved === 'fail' ? failReason || '랭킹 저장에 실패했어요' : result.review ? '기록이 아주 빨라서 확인한 뒤 랭킹에 올라가요' : rank ? (
             <>
               전체 <b>{rank}</b>위
             </>

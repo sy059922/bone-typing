@@ -55,20 +55,26 @@ export async function checkNickname(nick: string, token: string | null): Promise
 // 점수 = 타수 × 정확도² — 빨라도 오타가 많으면 손해
 export const scoreOf = (cpm: number, accuracy: number) => Math.round(cpm * Math.pow(accuracy / 100, 2));
 
-// 저장된 기록 번호를 돌려줌 (공유 링크 /r/<id> 용). 이 기기 저장이면 null
-export async function submitScore(s: Score, token: string | null): Promise<number | null> {
-  if (sb) {
-    const {data, error} = await sb.rpc('submit_score', {
-      p_nickname: s.nickname,
-      p_mode: s.mode,
-      p_cpm: s.cpm,
-      p_accuracy: s.accuracy,
-      p_items: s.items,
-      p_duration_ms: s.duration_ms,
-      p_token: token,
-    });
+// ── 서버 판정 (2026-10-25): 서버가 판과 문제를 정하고, 첫 타~제출을 서버 시계로 재서 점수를 계산
+export type Round = {round: string; items: string[]};
+export async function startRound(mode: Mode, term: string): Promise<Round | null> {
+  if (!sb) return null;
+  const {data, error} = await sb.rpc('start_round', {p_mode: mode, p_term: term});
+  if (error) throw error;
+  return data as Round;
+}
+export const beginRound = (round: string) => {
+  if (sb) void sb.rpc('begin_round', {p_round: round}).then(() => undefined, () => undefined);
+};
+export type Saved = {id: number; cpm: number; accuracy: number; score: number; status: 'ok' | 'review'; duration_ms: number};
+
+// 서버 판정으로 저장 → 서버가 계산한 값 / 이 기기 저장이면 null
+export async function submitScore(s: Score, token: string | null, round: string | null, errors: number): Promise<Saved | null> {
+  if (sb && round) {
+    const {data, error} = await sb.rpc('submit_score', {p_round: round, p_nickname: s.nickname, p_token: token, p_errors: errors});
     if (error) throw error;
-    return Number(data);
+    const d = data as Saved;
+    return {...d, accuracy: Number(d.accuracy)};
   }
   try {
     const all = [...readLocal(), {...s, created_at: new Date().toISOString()}];

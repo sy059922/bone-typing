@@ -6,7 +6,7 @@ import {modeLabel, modeOf, parseMode, type Category} from './lib/modes';
 import {Game, type Kind, type Result, type Term} from './Game';
 import {ResultModal} from './components/ResultModal';
 import {SoundToggle} from './components/SoundToggle';
-import {logClick, checkNickname, formatCode, getShared, getToken, isShared, newToken, parseCode, setToken, submitScore, topScores, type Mode, type Score} from './lib/ranking';
+import {beginRound, startRound, logClick, checkNickname, formatCode, getShared, getToken, isShared, newToken, parseCode, setToken, submitScore, topScores, type Mode, type Score} from './lib/ranking';
 import {initSound, setTheme, startBgm} from './lib/sound';
 import type {Lang} from './lib/typing';
 
@@ -105,6 +105,7 @@ export default function App() {
   const [rank, setRank] = useState<number | null>(null);
   const [best, setBest] = useState(false);
   const [scoreId, setScoreId] = useState<number | null>(null);
+  const [roundInfo, setRoundInfo] = useState<{round: string; items: string[]} | null>(null);
   const [failReason, setFailReason] = useState('');
   // 닉네임 선점 상태: taken = 남의 닉네임 → 복구 코드 입력, claimed = 이번 판으로 새로 선점
   const [nickTaken, setNickTaken] = useState(false);
@@ -157,6 +158,14 @@ export default function App() {
       }
     }
     setNickTaken(false);
+    // 서버에서 판(문제 목록) 받기 — 실패하면 랭킹 없이 연습만
+    let r: {round: string; items: string[]} | null = null;
+    try {
+      r = await startRound(modeOf(cat, lang, kind), term);
+    } catch {
+      r = null;
+    }
+    setRoundInfo(r);
     try {
       localStorage.setItem(NICK, n);
     } catch {
@@ -192,11 +201,18 @@ export default function App() {
   };
 
   // 끝나면 게임 화면 위에 결과 팝업 (확인을 눌러야 메인으로)
-  const done = async (r: Result) => {
+  const done = async (res: Result) => {
+    let r = res;
     setResult(r);
     setSaved('saving');
     try {
-      setScoreId(await submitScore({nickname: nick, ...r}, getToken(nick)));
+      const sv = await submitScore({nickname: nick, ...r}, getToken(nick), roundInfo?.round ?? null, r.errors ?? 0);
+      if (sv) {
+        // 화면 점수도 서버가 계산한 값으로
+        r = {...r, cpm: sv.cpm, accuracy: sv.accuracy, score: sv.score, duration_ms: sv.duration_ms, review: sv.status === 'review'};
+        setResult(r);
+        setScoreId(sv.id);
+      } else setScoreId(null);
       setSaved('ok');
       const top = await topScores(r.mode, 500);
       const i = top.findIndex((x) => x.nickname.toLowerCase() === nick.toLowerCase());
@@ -206,8 +222,12 @@ export default function App() {
       const code = (e as {code?: string; message?: string}).code;
       const msg = (e as {message?: string}).message ?? '';
       setFailReason(
-        code === '23514'
+        code === '23514' || msg.includes('too fast')
           ? '기록이 비정상적으로 빨라 랭킹에 올리지 않았어요'
+          : msg.includes('bad round')
+            ? '판 정보가 만료돼 랭킹에 올리지 못했어요 (다시 하기로 새 판을 시작해 주세요)'
+            : msg.includes('bad nickname')
+              ? '쓸 수 없는 닉네임이에요'
           : msg.includes('too many')
             ? '잠시 뒤에 다시 올려 주세요 (1분에 5번까지)'
             : msg.includes('nickname taken')
@@ -261,7 +281,7 @@ export default function App() {
   if (screen === 'game')
     return (
       <>
-        <Game key={round} cat={cat} pool={cat === 'muscle' ? MUSCLES : BONES} lang={lang} kind={kind} term={term} blind={blind} onDone={done} onQuit={() => setScreen('title')} />
+        <Game key={round} cat={cat} pool={cat === 'muscle' ? MUSCLES : BONES} lang={lang} kind={kind} term={term} blind={blind} order={roundInfo?.items} onFirstKey={() => roundInfo && beginRound(roundInfo.round)} onDone={done} onQuit={() => setScreen('title')} />
         {result ? (
           <ResultModal
             result={result}

@@ -10,7 +10,7 @@ import {check, units, type Lang} from './lib/typing';
 import {SoundToggle} from './components/SoundToggle';
 
 export type {Kind};
-export type Result = {mode: Mode; cpm: number; accuracy: number; items: number; duration_ms: number; score: number; passes?: number};
+export type Result = {mode: Mode; cpm: number; accuracy: number; items: number; duration_ms: number; score: number; passes?: number; errors?: number; review?: boolean};
 
 const ROUND = {word: 20, sentence: 8};
 
@@ -32,8 +32,12 @@ const targetOf = (b: Bone, lang: Lang, kind: Kind, term: Term) => {
   return term === 'native' ? NATIVE_SENTENCE[b.id] ?? toNative(b.sentence.ko) : b.sentence.ko;
 };
 
-export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; term: Term; blind: boolean; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, term, blind, onDone, onQuit}) => {
-  const queue = useMemo(() => shuffle(pool).slice(0, ROUND[kind]), [kind, pool]);
+export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; term: Term; blind: boolean; order?: string[]; onFirstKey?: () => void; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, term, blind, order, onFirstKey, onDone, onQuit}) => {
+  // 서버가 정해 준 문제 순서가 있으면 그대로 (랭킹 판정용), 없으면 무작위
+  const queue = useMemo(() => {
+    const fromServer = order?.map((id) => pool.find((b) => b.id === id)).filter((b): b is Bone => !!b);
+    return fromServer && fromServer.length ? fromServer : shuffle(pool).slice(0, ROUND[kind]);
+  }, [kind, pool, order]);
   const [idx, setIdx] = useState(0);
   const [value, setValue] = useState('');
   const [pressed, setPressed] = useState<Set<string>>(new Set());
@@ -122,7 +126,10 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
       setValue('');
       return;
     }
-    if (!stats.current.start && v) stats.current.start = performance.now();
+    if (!stats.current.start && v) {
+      stats.current.start = performance.now();
+      onFirstKey?.();
+    }
     // 한글 판인데 영문이 들어오면 한/영 안내
     setLatinWarn(lang === 'ko' && /[a-zA-Z]/.test(v));
     const c = check(target, kind === 'word' ? v.trim() : v, lang);
@@ -142,7 +149,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     const ms = Math.max(1, performance.now() - (s.start || performance.now()));
     const cpm = Math.round((s.units / ms) * 60000);
     const accuracy = Math.round((s.units / Math.max(1, s.units + s.errors)) * 10000) / 100;
-    onDone({mode: modeOf(cat, lang, kind), cpm, accuracy, items: queue.length, duration_ms: Math.round(ms), score: scoreOf(cpm, accuracy), passes: passes.current});
+    onDone({mode: modeOf(cat, lang, kind), cpm, accuracy, items: queue.length, duration_ms: Math.round(ms), score: scoreOf(cpm, accuracy), passes: passes.current, errors: s.errors});
   }, [cat, lang, kind, queue.length, onDone]);
 
   // 다음 문제로 (맞힘 · 패스 공통)
