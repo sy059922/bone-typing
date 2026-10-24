@@ -1,6 +1,6 @@
 import {ContactShadows, useGLTF} from '@react-three/drei';
 import {Canvas, useFrame, useThree} from '@react-three/fiber';
-import React, {Component, Suspense, useMemo, useRef} from 'react';
+import React, {Component, Suspense, useEffect, useMemo, useRef} from 'react';
 import * as THREE from 'three';
 import type {ModelRef} from '../data/bones';
 
@@ -93,6 +93,7 @@ const Mover: React.FC<{slot: Slot; bad: number; children: React.ReactNode}> = ({
 const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, bad, dim}) => {
   const {scene} = useGLTF(`/models/${model.file}.glb`, false, true);
   const isMuscle = model.file.startsWith('muscle');
+  const compact = useThree((st) => st.size.width < 700);
   const bone = useMemo(() => {
     const m = (isMuscle ? MUSCLE : BONE).clone();
     m.transparent = true;
@@ -139,9 +140,9 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
     group.updateMatrixWorld(true);
     // 근육 모드는 강조할 근육 기준으로 확대 (맥락 뼈는 화면 밖으로 넘어가도 됨)
     const box = new THREE.Box3();
-    if (isMuscle) {
+    if (isMuscle || compact) {
       group.children.forEach((c) => c.userData.hl && box.expandByObject(c));
-      const grow = box.getSize(new THREE.Vector3()).multiplyScalar(0.18);
+      const grow = box.getSize(new THREE.Vector3()).multiplyScalar(isMuscle ? 0.18 : 0.35);
       box.expandByVector(grow);
     } else box.setFromObject(group);
     const size = box.getSize(new THREE.Vector3());
@@ -152,7 +153,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
     const wrap = new THREE.Group();
     wrap.add(holder);
     return {wrap, count: done.size, hlCount: hl.size};
-  }, [scene, model, bone, ghost, isMuscle]);
+  }, [scene, model, bone, ghost, isMuscle, compact]);
 
   built.wrap.traverse((o) => {
     const m = o as THREE.Mesh;
@@ -218,8 +219,28 @@ const Burst: React.FC<{at: number}> = ({at}) => {
 
 export type StageItem = {key: string; model: ModelRef; slot: Slot};
 
+// 폰: 무대 높이·폭에 맞춰 카메라 거리 조절 (뼈는 최대 3 단위 크기로 맞춰져 있음)
+const CameraFit: React.FC = () => {
+  const {camera, size} = useThree();
+  useEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    if (size.width >= 700) {
+      cam.position.set(0, 0.4, 7);
+    } else {
+      const S = 3.4; // 화면에 담을 크기
+      const t = 2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
+      const aspect = size.width / size.height;
+      const z = Math.max(S / t, (S * 1.1) / (t * aspect));
+      cam.position.set(0, 0.1, Math.min(z, 9));
+    }
+    cam.updateProjectionMatrix();
+  }, [camera, size]);
+  return null;
+};
+
 export const BoneStage: React.FC<{items: StageItem[]; bad: boolean; bursts: number[]}> = ({items, bad, bursts}) => (
   <Canvas camera={{position: [0, 0.4, 7], fov: 38}} dpr={[1, 2]} gl={{antialias: true}}>
+    <CameraFit />
     <color attach="background" args={['#0D0D0D']} />
     <fog attach="fog" args={['#0D0D0D', 9, 18]} />
     {/* 사진 스튜디오 조명: 위 앞 키라이트 + 옆 보조 + 뒤 테두리 빛 */}
