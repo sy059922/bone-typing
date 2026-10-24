@@ -121,7 +121,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
     }
     const has = (n: string) => meshes.has(n);
     const hl = new Set(resolve(model.hl, has));
-    const show = resolve(model.show ?? model.hl, has);
+    const show = resolve((compact && !isMuscle && model.showPhone) || model.show || model.hl, has);
     hl.forEach((n) => show.includes(n) || show.push(n));
     const group = new THREE.Group();
     const done = new Set<THREE.Mesh>();
@@ -152,7 +152,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
       else {
         // 폰: 작은 뼈(슬개골·족근골·두상골)도 주변 뼈가 보이게 — 뼈 크기의 3배 또는 전체의 60% 중 큰 쪽, 너무 멀어지진 않게
         const allSpan = span(new THREE.Box3().setFromObject(group));
-        frame = Math.max(hlSpan * 3, Math.min(allSpan * 0.6, hlSpan * 6));
+        frame = Math.max(hlSpan * 3.5, Math.min(allSpan * 0.85, hlSpan * 7));
         frame = Math.min(frame, Math.max(allSpan * 1.05, hlSpan * 1.7));
       }
     } else {

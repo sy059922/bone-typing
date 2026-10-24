@@ -1,9 +1,9 @@
 // 게임에 나오는 뼈 48개 — 사용자 확정 목록 (척추 · 어깨와 팔 · 골반과 다리 + 묶음 이름 8개)
 // ko = 옛 한자어 용어, tag = 같은 이름이 둘일 때 화면에만 붙는 꼬리표
-// model = 3D 조립 파일(public/models/<file>.glb)의 노드 — hl 은 강조, show 는 흐린 맥락(없으면 hl 만)
+// model = 3D 조립 파일(public/models/<file>.glb)의 노드 — hl 은 강조, show 는 흐린 맥락(없으면 hl 만), showPhone 은 폰에서 더 넓게 보여 줄 맥락
 
 export type ModelFile = 'spine' | 'arm' | 'hand' | 'pelvis' | 'leg' | 'foot' | 'muscle_upper' | 'muscle_lower' | 'muscle_trunk';
-export type ModelRef = {file: ModelFile; hl: string[]; show?: string[]};
+export type ModelRef = {file: ModelFile; hl: string[]; show?: string[]; showPhone?: string[]};
 export type Bone = {
   id: string;
   ko: string;
@@ -61,21 +61,21 @@ export const BONES: Bone[] = [
     sentence: {ko: '요골 원위부 골절은 넘어지며 손을 짚을 때 흔히 생긴다.', en: 'Distal radius fractures often happen when you fall on an outstretched hand.'}},
   {id: 'ulna', ko: '척골', en: 'Ulna', region: 'upper', model: {file: 'arm', hl: ['ulna'], show: ['radius', 'ulna']},
     sentence: {ko: '척골은 팔꿈치 쪽에서 크고 손목 쪽으로 갈수록 가늘어진다.', en: 'The ulna is large at the elbow and narrows toward the wrist.'}},
-  {id: 'scaphoid', ko: '주상골', en: 'Scaphoid', tag: {ko: '손', en: 'hand'}, region: 'upper', model: {file: 'hand', hl: ['scaphoid'], show: WRIST},
+  {id: 'scaphoid', ko: '주상골', en: 'Scaphoid', tag: {ko: '손', en: 'hand'}, region: 'upper', model: {file: 'hand', hl: ['scaphoid'], show: WRIST, showPhone: HAND},
     sentence: {ko: '손의 주상골은 혈액 공급이 나빠 골절 뒤 잘 붙지 않는다.', en: 'The scaphoid has a poor blood supply, so its fractures often fail to heal.'}},
-  {id: 'lunate', ko: '월상골', en: 'Lunate', region: 'upper', model: {file: 'hand', hl: ['lunate'], show: WRIST},
+  {id: 'lunate', ko: '월상골', en: 'Lunate', region: 'upper', model: {file: 'hand', hl: ['lunate'], show: WRIST, showPhone: HAND},
     sentence: {ko: '월상골은 반달 모양이며, 탈구되면 정중신경을 누를 수 있다.', en: 'The lunate is crescent shaped and can press on the median nerve when dislocated.'}},
-  {id: 'triquetrum', ko: '삼각골', en: 'Triquetrum', region: 'upper', model: {file: 'hand', hl: ['triquetrum'], show: WRIST},
+  {id: 'triquetrum', ko: '삼각골', en: 'Triquetrum', region: 'upper', model: {file: 'hand', hl: ['triquetrum'], show: WRIST, showPhone: HAND},
     sentence: {ko: '삼각골은 손목의 척측에 있으며 두상골과 관절을 이룬다.', en: 'The triquetrum sits on the ulnar side of the wrist and meets the pisiform.'}},
-  {id: 'pisiform', ko: '두상골', en: 'Pisiform', region: 'upper', model: {file: 'hand', hl: ['pisiform'], show: WRIST},
+  {id: 'pisiform', ko: '두상골', en: 'Pisiform', region: 'upper', model: {file: 'hand', hl: ['pisiform'], show: WRIST, showPhone: HAND},
     sentence: {ko: '두상골은 척측수근굴근 힘줄 속에 있는 종자골이다.', en: 'The pisiform is a sesamoid bone inside the flexor carpi ulnaris tendon.'}},
-  {id: 'trapezium', ko: '대능형골', en: 'Trapezium', region: 'upper', model: {file: 'hand', hl: ['trapezium'], show: WRIST},
+  {id: 'trapezium', ko: '대능형골', en: 'Trapezium', region: 'upper', model: {file: 'hand', hl: ['trapezium'], show: WRIST, showPhone: HAND},
     sentence: {ko: '대능형골은 엄지 중수골과 안장관절을 이룬다.', en: 'The trapezium forms a saddle joint with the thumb metacarpal.'}},
-  {id: 'trapezoid', ko: '소능형골', en: 'Trapezoid', region: 'upper', model: {file: 'hand', hl: ['trapezoid'], show: WRIST},
+  {id: 'trapezoid', ko: '소능형골', en: 'Trapezoid', region: 'upper', model: {file: 'hand', hl: ['trapezoid'], show: WRIST, showPhone: HAND},
     sentence: {ko: '소능형골은 둘째 중수골과 관절을 이룬다.', en: 'The trapezoid articulates with the second metacarpal.'}},
-  {id: 'capitate', ko: '유두골', en: 'Capitate', region: 'upper', model: {file: 'hand', hl: ['capitate'], show: WRIST},
+  {id: 'capitate', ko: '유두골', en: 'Capitate', region: 'upper', model: {file: 'hand', hl: ['capitate'], show: WRIST, showPhone: HAND},
     sentence: {ko: '유두골은 수근골 가운데 가장 큰 뼈다.', en: 'The capitate is the largest carpal bone.'}},
-  {id: 'hamate', ko: '유구골', en: 'Hamate', region: 'upper', model: {file: 'hand', hl: ['hamate'], show: WRIST},
+  {id: 'hamate', ko: '유구골', en: 'Hamate', region: 'upper', model: {file: 'hand', hl: ['hamate'], show: WRIST, showPhone: HAND},
     sentence: {ko: '유구골의 갈고리는 골프채를 휘두르다 부러지기도 한다.', en: 'The hook of the hamate can break when you swing a golf club.'}},
   {id: 'metacarpal', ko: '중수골', en: 'Metacarpals', region: 'upper', model: {file: 'hand', hl: MC, show: HAND},
     sentence: {ko: '다섯째 중수골 경부 골절을 흔히 복서 골절이라 부른다.', en: 'A fracture of the fifth metacarpal neck is called a boxer’s fracture.'}},
