@@ -4,6 +4,7 @@ import {Keyboard} from './components/Keyboard';
 import type {Bone} from './data/bones';
 import {NATIVE_NAME, NATIVE_SENTENCE, toNative} from './data/native';
 import {modeOf, type Category, type Kind, type Mode} from './lib/modes';
+import {getUi, t} from './lib/i18n';
 import {scoreOf} from './lib/ranking';
 import {sfxBackspace, sfxBad, sfxFinish, sfxKey, sfxPass, sfxWord} from './lib/sound';
 import {check, norm, units, type Lang} from './lib/typing';
@@ -269,18 +270,24 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   const typed = [...value];
   const ghost = passing ? [...target] : [...target].slice(typed.length);
   const tag = bone.tag ? ` (${bone.tag[lang]})` : '';
-  const sub = lang === 'ko' ? `${bone.en}${bone.tag ? ` · ${bone.tag.en}` : ''}` : `${koName(bone, term)}${bone.tag ? ` (${bone.tag.ko})` : ''}`;
+  // 보조 이름표: 한글 판은 영어 이름, 영어 판은 한글 이름 (영어 화면이면 한글 대신 손·발 꼬리표만)
+  const sub =
+    lang === 'ko'
+      ? `${bone.en}${bone.tag ? ` · ${bone.tag.en}` : ''}`
+      : getUi() === 'en'
+        ? (bone.tag?.en ?? '')
+        : `${koName(bone, term)}${bone.tag ? ` (${bone.tag.ko})` : ''}`;
 
   return (
     <div className="game" onClick={() => input.current?.focus()}>
       <div className="hud">
         <button className="ghost-btn" onClick={onQuit}>
-          그만하기<span className="esc"> Esc</span>
+          {t('quit')}<span className="esc"> Esc</span>
         </button>
         <div className="hud-stats">
-          {blind ? <span className={`blind-badge ${revealed ? 'peek' : ''}`}>{revealed ? 'BLIND · 공개' : 'BLIND'}</span> : null}
+          {blind ? <span className={`blind-badge ${revealed ? 'peek' : ''}`}>{revealed ? t('peek') : 'BLIND'}</span> : null}
           <span>
-            <b>{liveCpm}</b> {lang === 'ko' ? '타' : 'CPM'}
+            <b>{liveCpm}</b> {lang === 'ko' ? t('cpmUnit') : 'CPM'}
           </span>
           <span>
             <b>{liveAcc}</b>%
@@ -365,13 +372,13 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
       </div>
       <div className="hint">
         <button className="pass-btn" onClick={pass} disabled={ended || passing}>
-          {passing ? 'PASS' : '패스'} <kbd>Tab</kbd>
+          {passing ? 'PASS' : t('pass')} <kbd>Tab</kbd>
         </button>
-        {latinWarn ? <span className="warn">한/영 키를 눌러 한글 입력으로 바꿔 주세요</span> : <span className="hint-keys">
-            {lang === 'en' ? '대소문자 구분 없음 · ' : ''}
-            {kind === 'word' ? 'Space 또는 Enter 로 확정' : '마침표까지 치고 Space 또는 Enter 로 다음 문장'}
+        {latinWarn ? <span className="warn">{t('imeWarn')}</span> : <span className="hint-keys">
+            {lang === 'en' ? t('caseHint') : ''}
+            {kind === 'word' ? t('wordHint') : t('sentHint')}
           </span>}
-        <span className="hint-touch">{lang === 'en' ? '대소문자 구분 없음 · ' : ''}글자를 누르면 키보드가 열려요 · 확정은 띄어쓰기/엔터</span>
+        <span className="hint-touch">{lang === 'en' ? t('caseHint') : ''}{t('touchHint')}</span>
       </div>
 
       <Keyboard

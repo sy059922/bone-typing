@@ -1082,3 +1082,29 @@ html.in-game body {
     order: 6;
   }
 }
+
+/* 화면 언어 */
+.ui-lang {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  padding: 2px;
+  z-index: 2;
+}
+.ui-lang button {
+  border: 0;
+  background: transparent;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 5px 9px;
+  border-radius: 6px;
+}
+.ui-lang button.on {
+  background: var(--text);
+  color: var(--bg);
+}

@@ -1,3 +1,4 @@
+import {getUi} from '../lib/i18n';
 import type {Lang} from '../lib/typing';
 
 type K = {code: string; en: string; ko?: string; koS?: string; w?: number};
@@ -26,7 +27,7 @@ const ROWS: K[][] = [
     {code: 'KeyV', en: 'V', ko: 'ㅍ'}, {code: 'KeyB', en: 'B', ko: 'ㅠ'}, {code: 'KeyN', en: 'N', ko: 'ㅜ'}, {code: 'KeyM', en: 'M', ko: 'ㅡ'},
     {code: 'Comma', en: ','}, {code: 'Period', en: '.'}, {code: 'Slash', en: '/'}, {code: 'ShiftRight', en: 'Shift', w: 2.4},
   ],
-  [{code: 'Lang', en: '한/영', w: 1.6}, {code: 'Space', en: '', w: 8}, {code: 'Lang2', en: '', w: 1.6}],
+  [{code: 'Lang', en: getUi() === 'en' ? 'Lang' : '한/영', w: 1.6}, {code: 'Space', en: '', w: 8}, {code: 'Lang2', en: '', w: 1.6}],
 ];
 
 const HOME = new Set(['KeyF', 'KeyJ']);

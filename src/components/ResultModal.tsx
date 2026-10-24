@@ -2,6 +2,7 @@ import confetti from 'canvas-confetti';
 import {useEffect, useRef, useState} from 'react';
 import type {Result} from '../Game';
 import {modeLabel} from '../lib/modes';
+import {t} from '../lib/i18n';
 import {logClick} from '../lib/ranking';
 import {canSystemShare, copyResult, downloadCard, systemShare} from '../lib/share';
 
@@ -67,93 +68,95 @@ export const ResultModal: React.FC<{
   const doSystem = async () => {
     logClick('share_system');
     const r = await systemShare(result, nick, rank, scoreId);
-    if (r === 'failed') say('공유창을 열 수 없어요. 결과 복사나 이미지 저장을 써 주세요.');
+    if (r === 'failed') say(t('shareFail'));
   };
   const doCopy = async () => {
     logClick('share_copy');
-    say((await copyResult(result, nick, rank, scoreId)) ? '결과를 복사했어요. 카카오톡 대화창에 붙여 넣어 보세요.' : '복사가 막혀 있어요.');
+    say((await copyResult(result, nick, rank, scoreId)) ? t('copied') : t('copyBlocked'));
   };
   const doSave = async () => {
     logClick('share_image');
     await downloadCard(result, nick, rank);
-    say('결과 카드 이미지를 저장했어요.');
+    say(t('imgSaved'));
   };
 
   return (
     <div className="modal-back" onKeyDown={(e) => e.key === 'Escape' && armed.current && onOk()}>
-      <div className="modal" role="dialog" aria-modal="true" aria-label="게임 결과">
+      <div className="modal" role="dialog" aria-modal="true" aria-label={t('resultAria')}>
         <div className="modal-head">
           <span>{modeLabel(result.mode)}</span>
           <span>{nick}</span>
         </div>
         {best ? <div className="modal-best">NEW BEST</div> : null}
         <div className="modal-score">{shown}</div>
-        <div className="modal-sub">점수 = 타수 × 정확도²{result.passes ? ` · 패스 ${result.passes}개 (오타로 계산)` : ''}</div>
+        <div className="modal-sub">{t('formula')}{result.passes ? t('passes', {n: result.passes}) : ''}</div>
         <div className="result-grid">
           <div>
             <b>{result.cpm}</b>
-            <span>{result.mode.includes('ko-') ? '타수' : 'CPM'}</span>
+            <span>{result.mode.includes('ko-') ? t('cpm') : 'CPM'}</span>
           </div>
           <div>
             <b>{result.accuracy.toFixed(1)}%</b>
-            <span>정확도</span>
+            <span>{t('acc')}</span>
           </div>
           <div>
             <b>{(result.duration_ms / 1000).toFixed(1)}s</b>
-            <span>시간</span>
+            <span>{t('time')}</span>
           </div>
         </div>
         <div className="modal-rank">
-          {saved === 'saving' ? '랭킹에 올리는 중…' : saved === 'fail' ? failReason || '랭킹 저장에 실패했어요' : result.review ? '기록이 아주 빨라서 확인한 뒤 랭킹에 올라가요' : rank ? (
+          {saved === 'saving' ? t('saving') : saved === 'fail' ? failReason || t('saveFail') : result.review ? t('review') : rank ? (
             <>
-              전체 <b>{rank}</b>위
+              {t('rankPre')}
+              <b>{rank}</b>
+              {t('rankPost')}
             </>
           ) : (
-            '랭킹에 올렸어요'
+            t('savedOk')
           )}
         </div>
         {/* 게임 유입 → 인스타 팔로우 */}
         <a className="follow" href="https://www.instagram.com/iamnotwoodz/" target="_blank" rel="noopener noreferrer" onClick={() => logClick('follow')}>
           <span className="follow-handle">@iamnotwoodz</span>
-          <span className="follow-text">팔로우하고 새 모드 소식 받기</span>
+          <span className="follow-text">{t('follow')}</span>
           <span className="follow-arrow">→</span>
         </a>
         {claimCode ? (
           <div className="claim">
             <div>
-              닉네임 <b>‘{nick}’</b>을 내 것으로 등록했어요. 다른 기기에서 이 닉네임을 쓰려면 아래 복구 코드가 필요해요.
+              {t('claimed', {n: nick})}
             </div>
             <div className="claim-row">
               <code className="claim-code">{claimCode}</code>
-              <button className="ghost-btn" onClick={() => navigator.clipboard.writeText(claimCode).then(() => say('복구 코드를 복사했어요'), () => say('복사가 막혀 있어요'))}>
-                복사
+              <button className="ghost-btn" onClick={() => navigator.clipboard.writeText(claimCode).then(() => say(t('codeCopied')), () => say(t('copyBlocked')))}>
+                {t('copy')}
               </button>
             </div>
           </div>
         ) : null}
         <div className="modal-btns">
           <button className={`ghost-btn ${sharing ? 'on' : ''}`} onClick={() => setSharing((x) => !x)}>
-            공유하기
+            {t('share')}
           </button>
           <button className="ghost-btn" onClick={() => armed.current && onAgain()}>
-            다시 하기
+            {t('again')}
           </button>
           <button ref={okBtn} className="start" onClick={() => armed.current && onOk()}>
-            확인
+            {t('ok')}
           </button>
         </div>
         {sharing ? (
           <div className="share-row">
             {canSystemShare() ? (
               <button className="ghost-btn" onClick={doSystem}>
-                카카오톡 · 공유창
+                {t('shareSys')}
               </button>
             ) : null}
             <button className="ghost-btn" onClick={doCopy}>
-              결과 복사
+              {t('shareCopy')}
             </button>
             <button className="ghost-btn" onClick={doSave}>
-              이미지 저장
+              {t('shareImg')}
             </button>
           </div>
         ) : null}

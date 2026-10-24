@@ -3,6 +3,7 @@ import {BoneStage, IconStage, preloadModels} from './components/BoneStage';
 import {BONES} from './data/bones';
 import {MUSCLES} from './data/muscles';
 import {modeLabel, modeOf, parseMode, type Category} from './lib/modes';
+import {setUi, t, useUi, type Ui} from './lib/i18n';
 import {Game, type Kind, type Result, type Term} from './Game';
 import {ResultModal} from './components/ResultModal';
 import {SoundToggle} from './components/SoundToggle';
@@ -38,17 +39,18 @@ const Board: React.FC<{mode: Mode; me?: string; refresh: number}> = ({mode, me, 
     <div className="board">
       <div className="board-head">
         RANKING · {modeLabel(mode)}
-        <span className="board-scope">{isShared() ? '전체' : '이 기기'}</span>
+        <span className="board-scope">{isShared() ? t('scopeAll') : t('scopeLocal')}</span>
       </div>
-      {err ? <div className="board-empty">랭킹을 불러오지 못했어요</div> : null}
-      {rows && rows.length === 0 ? <div className="board-empty">아직 기록이 없어요. 첫 1등을 노려 보세요!</div> : null}
+      {err ? <div className="board-empty">{t('boardErr')}</div> : null}
+      {rows && rows.length === 0 ? <div className="board-empty">{t('boardEmpty')}</div> : null}
       {rows?.map((r, i) => (
         <div key={`${r.nickname}-${i}`} className={`board-row ${me && r.nickname === me ? 'me' : ''}`}>
           <span className="rank">{String(i + 1).padStart(2, '0')}</span>
           <span className="nick">{r.nickname}</span>
           <span className="score">{r.score}</span>
           <span className="meta">
-            {r.cpm}타 · {Number(r.accuracy).toFixed(0)}%
+            {r.cpm}
+            {t('cpmUnit')} · {Number(r.accuracy).toFixed(0)}%
           </span>
         </div>
       ))}
@@ -61,6 +63,7 @@ const IDLE_MUSCLE = [{key: 'title-quads', model: MUSCLES.find((b) => b.id === 'q
 
 export default function App() {
   const [screen, setScreen] = useState<'title' | 'game'>('title');
+  const ui = useUi();
   const [cat, setCat] = useState<Category>('bone');
   // 한글 용어: 한자어(쇄골) · 우리말(빗장뼈) — 이 브라우저에 기억
   const [term, setTermState] = useState<Term>(() => {
@@ -95,7 +98,7 @@ export default function App() {
     }
   };
   useEffect(() => setTheme(blind ? 'blind' : 'normal'), [blind]);
-  const [lang, setLang] = useState<Lang>('ko');
+  const [lang, setLang] = useState<Lang>(() => (ui === 'en' ? 'en' : 'ko'));
   const [kind, setKind] = useState<Kind>('word');
   const [nick, setNick] = useState(readNick);
   const [result, setResult] = useState<Result | null>(null);
@@ -185,7 +188,7 @@ export default function App() {
   const recover = async () => {
     const code = parseCode(codeInput);
     if (code.length !== 12) {
-      setCodeErr('복구 코드는 12자리예요');
+      setCodeErr(t('code12'));
       return;
     }
     try {
@@ -194,9 +197,9 @@ export default function App() {
         setNickTaken(false);
         setCodeInput('');
         start();
-      } else setCodeErr('코드가 맞지 않아요');
+      } else setCodeErr(t('codeWrong'));
     } catch {
-      setCodeErr('확인하지 못했어요. 잠시 뒤 다시 해 주세요');
+      setCodeErr(t('codeFail'));
     }
   };
 
@@ -223,16 +226,16 @@ export default function App() {
       const msg = (e as {message?: string}).message ?? '';
       setFailReason(
         code === '23514' || msg.includes('too fast')
-          ? '기록이 비정상적으로 빨라 랭킹에 올리지 않았어요'
+          ? t('errFast')
           : msg.includes('bad round')
-            ? '판 정보가 만료돼 랭킹에 올리지 못했어요 (다시 하기로 새 판을 시작해 주세요)'
+            ? t('errRound')
             : msg.includes('bad nickname')
-              ? '쓸 수 없는 닉네임이에요'
-          : msg.includes('too many')
-            ? '잠시 뒤에 다시 올려 주세요 (1분에 5번까지)'
-            : msg.includes('nickname taken')
-              ? '다른 사람이 쓰는 닉네임이라 저장하지 못했어요'
-              : '',
+              ? t('errNick')
+              : msg.includes('too many')
+                ? t('errMany')
+                : msg.includes('nickname taken')
+                  ? t('errTaken')
+                  : '',
       );
       setClaimed(false);
       setSaved('fail');
@@ -317,62 +320,73 @@ export default function App() {
       <div className="title-panel">
         {screen === 'title' ? (
           <>
+            {/* 화면 언어 */}
+            <div className="ui-lang" role="group" aria-label="Language">
+              {(['ko', 'en'] as Ui[]).map((u) => (
+                <button
+                  key={u}
+                  className={ui === u ? 'on' : ''}
+                  onClick={() => {
+                    setUi(u);
+                    setLang(u);
+                  }}
+                >
+                  {u === 'ko' ? '한국어' : 'EN'}
+                </button>
+              ))}
+            </div>
             <div className="logo">
-              뼈쟁이
+              {t('logo1')}
               <br />
-              <span className="logo-king">타자연습</span>
+              <span className="logo-king">{t('logo2')}</span>
               <span className="logo-sub">{cat === 'muscle' ? 'BONE NAME TYPING · MUSCLE EDITION' : 'BONE NAME TYPING'}</span>
             </div>
-            {vs ? (
-              <div className="vs">
-                <b>{vs.nickname}</b>님의 <b>{vs.score}점</b>({modeLabel(vs.mode)} · 전체 {vs.rank}위)에 도전해 보세요
-              </div>
-            ) : null}
+            {vs ? <div className="vs">{t('vs', {n: vs.nickname, s: vs.score, m: modeLabel(vs.mode), r: vs.rank})}</div> : null}
             <div className="seg">
               <button className={cat === 'bone' ? 'on' : ''} onClick={() => setCat('bone')}>
-                뼈
+                {t('bone')}
               </button>
               <button className={cat === 'muscle' ? 'on' : ''} onClick={() => setCat('muscle')}>
-                근육
+                {t('muscle')}
               </button>
             </div>
             <div className="seg">
               <button className={lang === 'ko' ? 'on' : ''} onClick={() => setLang('ko')}>
-                한글
+                {t('langKo')}
               </button>
               <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>
                 English
               </button>
             </div>
-            {lang === 'en' ? <div className="note">Aa 대소문자 구분 없이 쳐도 돼요</div> : null}
+            {lang === 'en' ? <div className="note">{t('caseNote')}</div> : null}
             {lang === 'ko' ? (
               <div className="seg term">
                 <button className={term === 'hanja' ? 'on' : ''} onClick={() => setTerm('hanja')}>
-                  한자어 <small>쇄골</small>
+                  {t('hanja')} <small>쇄골</small>
                 </button>
                 <button className={term === 'native' ? 'on' : ''} onClick={() => setTerm('native')}>
-                  우리말 <small>빗장뼈</small>
+                  {t('native')} <small>빗장뼈</small>
                 </button>
               </div>
             ) : null}
             <div className="seg">
               <button className={kind === 'word' ? 'on' : ''} onClick={() => setKind('word')}>
-                낱말 연습
+                {t('word')}
               </button>
               <button className={kind === 'sentence' ? 'on' : ''} onClick={() => setKind('sentence')}>
-                문장 연습
+                {t('sentence')}
               </button>
             </div>
             <button className={`blind-toggle ${blind ? 'on' : ''}`} onClick={() => setBlind(!blind)} role="switch" aria-checked={blind}>
               <span className="blind-knob" />
               <span className="blind-text">
-                <b>블라인드 모드</b>
-                <small>정답 글씨 숨기기 · 틀린 문제만 보여 줌</small>
+                <b>{t('blind')}</b>
+                <small>{t('blindSub')}</small>
               </span>
             </button>
             <input
               className="nick-input"
-              placeholder="닉네임 (12자까지)"
+              placeholder={t('nickPh')}
               name="bone-nickname"
               autoComplete="off"
               autoCorrect="off"
@@ -390,13 +404,11 @@ export default function App() {
             />
             {nickTaken ? (
               <div className="claim">
-                <div>
-                  <b>‘{nick.trim()}’</b>은 이미 다른 사람이 쓰는 닉네임이에요. 다른 닉네임을 쓰거나, 내 닉네임이라면 복구 코드를 넣어 주세요.
-                </div>
+                <div>{t('taken', {n: nick.trim()})}</div>
                 <div className="claim-row">
                   <input
                     className="nick-input"
-                    placeholder="복구 코드 (XXXX-XXXX-XXXX)"
+                    placeholder={t('codePh')}
                     value={codeInput}
                     onChange={(e) => {
                       setCodeInput(e.target.value);
@@ -405,18 +417,18 @@ export default function App() {
                     onKeyDown={(e) => e.key === 'Enter' && recover()}
                   />
                   <button className="ghost-btn" onClick={recover}>
-                    확인
+                    {t('ok')}
                   </button>
                 </div>
                 {codeErr ? <div className="claim-err">{codeErr}</div> : null}
               </div>
             ) : null}
             <button className="start" disabled={!nick.trim() || checking} onClick={start}>
-              {checking ? '닉네임 확인 중…' : '시작하기'}
+              {checking ? t('checking') : t('start')}
             </button>
             {isShared() && nick.trim() && getToken(nick) && !nickTaken ? (
               <button className="link-btn" onClick={() => setShowCode((x) => !x)}>
-                {showCode ? `복구 코드 ${formatCode(getToken(nick)!)}` : '내 닉네임 복구 코드 보기'}
+                {showCode ? `${t('codeIs')} ${formatCode(getToken(nick)!)}` : t('showCode')}
               </button>
             ) : null}
             <SoundToggle />
@@ -424,7 +436,7 @@ export default function App() {
           </>
         ) : null}
         <div className="credit">
-          3D 뼈 모델: BodyParts3D © DBCLS, CC BY-SA 2.1 JP (단위·경량화·이름 수정) · made by <a className="credit-link" href="https://www.instagram.com/iamnotwoodz/" target="_blank" rel="noopener noreferrer" onClick={() => logClick('follow_title')}>@iamnotwoodz</a>
+          {t('credit')} · made by <a className="credit-link" href="https://www.instagram.com/iamnotwoodz/" target="_blank" rel="noopener noreferrer" onClick={() => logClick('follow_title')}>@iamnotwoodz</a>
         </div>
       </div>
     </div>
