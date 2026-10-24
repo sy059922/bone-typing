@@ -158,7 +158,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     const ms = Math.max(1, performance.now() - (s.start || performance.now()));
     const cpm = Math.round((s.units / ms) * 60000);
     const accuracy = Math.round((s.units / Math.max(1, s.units + s.errors)) * 10000) / 100;
-    onDone({mode: modeOf(cat, lang, kind), cpm, accuracy, items: queue.length, duration_ms: Math.round(ms), score: scoreOf(cpm, accuracy), passes: passes.current, errors: s.errors});
+    onDone({mode: modeOf(cat, lang, kind, blind), cpm, accuracy, items: queue.length, duration_ms: Math.round(ms), score: scoreOf(cpm, accuracy), passes: passes.current, errors: s.errors});
   }, [cat, lang, kind, queue.length, onDone]);
 
   // 다음 문제로 (맞힘 · 패스 공통)

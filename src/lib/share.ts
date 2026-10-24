@@ -1,5 +1,5 @@
 import type {Result} from '../Game';
-import {modeShort} from './modes';
+import {modeShort, parseMode} from './modes';
 import {getUi} from './i18n';
 
 export const SITE = 'https://bone-typing.vercel.app';
@@ -10,8 +10,8 @@ export const shareUrl = (id: number | null) => (id ? `${SITE}/r/${id}` : SITE);
 
 export const shareText = (r: Result, nick: string, rank: number | null, id: number | null = null) =>
   getUi() === 'en'
-    ? `🦴 Bone Typing${r.mode.startsWith('m-') ? ' · Muscles' : ''}\n${nick} · ${modeShort(r.mode)} ${r.score} pts (${r.cpm} CPM · ${r.accuracy.toFixed(1)}%)${rank ? ` · #${rank}` : ''}\nCan you beat it? 👉 ${shareUrl(id)}`
-    : `🦴 뼈쟁이 타자연습${r.mode.startsWith('m-') ? ' · 근육편' : ''}\n${nick} · ${modeShort(r.mode)} ${r.score}점 (${r.cpm}타 · 정확도 ${r.accuracy.toFixed(1)}%)${rank ? ` · 전체 ${rank}위` : ''}\n나도 도전하기 👉 ${shareUrl(id)}`;
+    ? `🦴 Bone Typing${parseMode(r.mode).cat === 'muscle' ? ' · Muscles' : ''}\n${nick} · ${modeShort(r.mode)} ${r.score} pts (${r.cpm} CPM · ${r.accuracy.toFixed(1)}%)${rank ? ` · #${rank}` : ''}\nCan you beat it? 👉 ${shareUrl(id)}`
+    : `🦴 뼈쟁이 타자연습${parseMode(r.mode).cat === 'muscle' ? ' · 근육편' : ''}\n${nick} · ${modeShort(r.mode)} ${r.score}점 (${r.cpm}타 · 정확도 ${r.accuracy.toFixed(1)}%)${rank ? ` · 전체 ${rank}위` : ''}\n나도 도전하기 👉 ${shareUrl(id)}`;
 
 // 결과 카드 그림 (1080×1350, 인스타·카톡 공유용) — 게임과 같은 무채색
 export async function resultCard(r: Result, nick: string, rank: number | null): Promise<Blob> {

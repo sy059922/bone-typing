@@ -129,9 +129,10 @@ export default function App() {
       setCat(m.cat);
       setLang(m.lang);
       setKind(m.kind);
+      setBlindState(m.blind);
     });
   }, []);
-  const mode = modeOf(cat, lang, kind);
+  const mode = modeOf(cat, lang, kind, blind);
 
   useEffect(() => preloadModels(cat === 'muscle' ? ['muscle_upper', 'muscle_lower', 'muscle_trunk'] : ['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot']), [cat]);
 
@@ -164,7 +165,7 @@ export default function App() {
     // 서버에서 판(문제 목록) 받기 — 실패하면 랭킹 없이 연습만
     let r: {round: string; items: string[]} | null = null;
     try {
-      r = await startRound(modeOf(cat, lang, kind), term);
+      r = await startRound(mode, term);
     } catch {
       r = null;
     }
