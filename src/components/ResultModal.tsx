@@ -5,6 +5,7 @@ import {modeLabel} from '../lib/modes';
 import {t} from '../lib/i18n';
 import {logClick} from '../lib/ranking';
 import {canSystemShare, copyResult, downloadCard, systemShare} from '../lib/share';
+import {formatTime} from '../lib/study';
 
 
 // 무채색 폭죽 — 흰색·뼈색·회색 조각
@@ -161,6 +162,58 @@ export const ResultModal: React.FC<{
           </div>
         ) : null}
         {toast ? <div className="modal-toast">{toast}</div> : null}
+      </div>
+    </div>
+  );
+};
+
+// 학습 모드 결과: 걸린 시간 (스톱워치) · 이 기기 최고 기록
+export const StudyResult: React.FC<{result: Result; label: string; best: number | null; newBest: boolean; onOk: () => void; onAgain: () => void}> = ({
+  result,
+  label,
+  best,
+  newBest,
+  onOk,
+  onAgain,
+}) => {
+  const [armed, setArmed] = useState(false);
+  const okBtn = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    celebrate();
+    // 마지막 확정 키(엔터)가 바로 버튼을 누르지 않게 잠깐 잠금
+    const arm = setTimeout(() => {
+      setArmed(true);
+      okBtn.current?.focus();
+    }, 900);
+    return () => clearTimeout(arm);
+  }, []);
+  const st = result.study ?? {misses: 0, rounds: 1};
+  return (
+    <div className="modal-back" role="dialog" aria-label={t('resultAria')}>
+      <div className="modal study-result">
+        <div className="modal-head">
+          <span>{t('studyDone')}</span>
+          <span>{label}</span>
+        </div>
+        {newBest ? <div className="modal-best">{t('newBest')}</div> : null}
+        <div className="modal-score">{formatTime(result.duration_ms)}</div>
+        <div className="modal-sub">{t('studySub', {n: result.items, m: st.misses, r: st.rounds})}</div>
+        <div className="modal-rank">
+          {st.misses === 0 ? t('studyPerfect') : null}
+          {best != null && !newBest ? (
+            <>
+              {t('studyBest')} <b>{formatTime(best)}</b>
+            </>
+          ) : null}
+        </div>
+        <div className="modal-btns study-btns">
+          <button className="ghost-btn" onClick={() => armed && onOk()}>
+            {t('toTitle')}
+          </button>
+          <button ref={okBtn} className="start" onClick={() => armed && onAgain()}>
+            {t('again')}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -814,6 +814,7 @@ button {
   margin-top: 40px;
   font-size: 24px;
   color: var(--sub);
+  word-break: keep-all;
 }
 .og-stage {
   position: relative;
@@ -1111,4 +1112,119 @@ html.in-game body {
 .ui-lang button.on {
   background: var(--text);
   color: var(--bg);
+}
+
+/* 학습 모드 */
+.seg.mode button {
+  font-size: 14px;
+  padding: 8px 0;
+}
+.study-note {
+  line-height: 1.55;
+  margin-top: 0;
+}
+.parts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 6px;
+}
+.parts button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line2);
+  background: transparent;
+  color: var(--sub);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 10px;
+  border-radius: 9px;
+  text-align: left;
+}
+.parts button small {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+}
+.parts button.on {
+  border-color: var(--text);
+  color: var(--text);
+}
+.parts button.on small {
+  color: var(--sub);
+}
+.part-check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--line2);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  line-height: 1;
+}
+.parts button.on .part-check {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+}
+.study-best {
+  font-size: 13px;
+  color: var(--sub);
+  padding-left: 4px;
+}
+.study-best b {
+  font-family: var(--mono);
+  color: var(--text);
+  margin-left: 4px;
+}
+.hud-stats.study {
+  align-items: baseline;
+}
+.stopwatch b {
+  font-variant-numeric: tabular-nums;
+  min-width: 5.2ch;
+  display: inline-block;
+}
+.study-round {
+  color: var(--text);
+  border: 1px solid var(--line2);
+  border-radius: 5px;
+  padding: 2px 6px;
+}
+.study-miss b {
+  color: var(--bad);
+  margin-left: 4px;
+}
+.modal-btns.study-btns {
+  grid-template-columns: 1fr 1.3fr;
+}
+@media (max-width: 640px), (pointer: coarse) and (max-width: 1024px) {
+  /* 학습 모드 첫 화면: 이름 → 모드 → 분류·언어 → 영역 → 시작 */
+  .title-panel > .seg.mode {
+    order: 1;
+  }
+  .title-panel.study > .seg,
+  .title-panel.study > .note {
+    order: 2;
+  }
+  .title-panel.study > .seg.mode {
+    order: 1;
+  }
+  .title-panel.study > .parts {
+    order: 3;
+  }
+  .title-panel.study > .start {
+    order: 4;
+  }
+  .title-panel.study > .study-best {
+    order: 5;
+  }
+  .hud-stats.study {
+    gap: 14px;
+  }
 }

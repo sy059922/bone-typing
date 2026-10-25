@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {BoneStage, type StageItem} from './components/BoneStage';
 import {Keyboard} from './components/Keyboard';
 import type {Bone} from './data/bones';
@@ -9,9 +9,10 @@ import {scoreOf} from './lib/ranking';
 import {sfxBackspace, sfxBad, sfxFinish, sfxKey, sfxPass, sfxWord} from './lib/sound';
 import {check, norm, units, type Lang} from './lib/typing';
 import {SoundToggle} from './components/SoundToggle';
+import {formatTime} from './lib/study';
 
 export type {Kind};
-export type Result = {mode: Mode; cpm: number; accuracy: number; items: number; duration_ms: number; score: number; passes?: number; errors?: number; review?: boolean};
+export type Result = {mode: Mode; cpm: number; accuracy: number; items: number; duration_ms: number; score: number; passes?: number; errors?: number; review?: boolean; study?: {misses: number; rounds: number}};
 
 const ROUND = {word: 20, sentence: 8};
 
@@ -33,12 +34,18 @@ const targetOf = (b: Bone, lang: Lang, kind: Kind, term: Term) => {
   return term === 'native' ? NATIVE_SENTENCE[b.id] ?? toNative(b.sentence.ko) : b.sentence.ko;
 };
 
-export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; term: Term; blind: boolean; order?: string[]; onFirstKey?: () => void; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, term, blind, order, onFirstKey, onDone, onQuit}) => {
-  // 서버가 정해 준 문제 순서가 있으면 그대로 (랭킹 판정용), 없으면 무작위
-  const queue = useMemo(() => {
+// study: 학습 모드 — pool 전체를 섞어 내고, 틀리는 순간 다음 문제로. 틀린 문제는 회차가 끝나면 섞어서 다시 (다 맞힐 때까지)
+export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; term: Term; blind: boolean; study?: boolean; order?: string[]; onFirstKey?: () => void; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, term, blind, study = false, order, onFirstKey, onDone, onQuit}) => {
+  // 서버가 정해 준 문제 순서가 있으면 그대로 (랭킹 판정용), 없으면 무작위. 학습 모드는 틀린 문제를 뒤에 덧붙임
+  const [queue, setQueue] = useState(() => {
+    if (study) return shuffle(pool);
     const fromServer = order?.map((id) => pool.find((b) => b.id === id)).filter((b): b is Bone => !!b);
     return fromServer && fromServer.length ? fromServer : shuffle(pool).slice(0, ROUND[kind]);
-  }, [kind, pool, order]);
+  });
+  const missed = useRef<Bone[]>([]); // 이번 회차에 틀린 문제
+  const solved = useRef(new Set<string>());
+  const misses = useRef(0);
+  const [studyRound, setStudyRound] = useState(1);
   const [idx, setIdx] = useState(0);
   const [value, setValue] = useState('');
   const [pressed, setPressed] = useState<Set<string>>(new Set());
@@ -54,7 +61,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   const [bursts, setBursts] = useState<number[]>([]);
   const [combo, setCombo] = useState(0);
   const [latinWarn, setLatinWarn] = useState(false);
-  const stats = useRef({start: 0, units: 0, errors: 0, clean: true});
+  const stats = useRef({start: 0, end: 0, units: 0, errors: 0, clean: true});
   const [tick, setTick] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const composing = useRef(false);
@@ -64,7 +71,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
   const keySinceSubmit = useRef(true);
   const submittedAt = useRef(0);
   const progress = useRef(0);
-  progress.current = idx / queue.length;
+  progress.current = study ? solved.current.size / pool.length : idx / queue.length;
 
   const bone = queue[idx];
   // 3D 무대: 왼쪽 = 방금 친 뼈, 가운데 = 지금, 오른쪽 = 다음 (모두 회전). 끝나면 한 칸씩 더 밀림
@@ -87,9 +94,9 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
 
   // 진행 중 타수 갱신용
   useEffect(() => {
-    const t = setInterval(() => setTick((x) => x + 1), 500);
+    const t = setInterval(() => setTick((x) => x + 1), study ? 100 : 500);
     return () => clearInterval(t);
-  }, []);
+  }, [study]);
 
   useEffect(() => {
     const focus = () => input.current?.focus();
@@ -142,6 +149,10 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     // 한글 판인데 영문이 들어오면 한/영 안내
     setLatinWarn(lang === 'ko' && /[a-zA-Z]/.test(v));
     const c = check(target, kind === 'word' ? v.trim() : v, lang);
+    if (study && !c.ok && v.trim()) {
+      miss();
+      return;
+    }
     if (!c.ok && lastOk.current && v.length >= value.length && v.trim()) {
       stats.current.errors++;
       stats.current.clean = false;
@@ -155,11 +166,15 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
 
   const finish = useCallback(() => {
     const s = stats.current;
-    const ms = Math.max(1, performance.now() - (s.start || performance.now()));
+    const ms = Math.max(1, (s.end || performance.now()) - (s.start || performance.now()));
     const cpm = Math.round((s.units / ms) * 60000);
     const accuracy = Math.round((s.units / Math.max(1, s.units + s.errors)) * 10000) / 100;
+    if (study) {
+      onDone({mode: modeOf(cat, lang, kind), cpm, accuracy, items: pool.length, duration_ms: Math.round(ms), score: 0, errors: s.errors, study: {misses: misses.current, rounds: studyRound}});
+      return;
+    }
     onDone({mode: modeOf(cat, lang, kind, blind), cpm, accuracy, items: queue.length, duration_ms: Math.round(ms), score: scoreOf(cpm, accuracy), passes: passes.current, errors: s.errors});
-  }, [cat, lang, kind, queue.length, onDone]);
+  }, [cat, lang, kind, queue.length, onDone, study, pool.length, studyRound]);
 
   // 다음 문제로 (맞힘 · 패스 공통)
   const advance = useCallback(() => {
@@ -174,7 +189,18 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     }
     setValue('');
     const next = idx + 1;
+    // 학습: 회차가 끝났는데 틀린 문제가 있으면 섞어서 다음 회차로
+    if (study && next >= queue.length && missed.current.length) {
+      const again = shuffle(missed.current);
+      missed.current = [];
+      setQueue((q) => [...q, ...again]);
+      setStudyRound((r) => r + 1);
+      setIdx(next);
+      setRevealed(false);
+      return;
+    }
     if (next >= queue.length) {
+      stats.current.end = performance.now();
       setEnded(true);
       setTimeout(() => {
         sfxFinish();
@@ -184,10 +210,35 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     }
     setIdx(next);
     setRevealed(false);
-  }, [idx, queue, finish]);
+  }, [idx, queue, finish, study]);
+
+  // 학습: 틀린 순간 — 정답을 잠깐 보여 주고 다음 문제로, 이 문제는 다음 회차에 다시
+  const miss = useCallback(() => {
+    if (ended || passing) return;
+    stats.current.errors++;
+    stats.current.clean = false;
+    misses.current++;
+    if (!missed.current.includes(bone)) missed.current.push(bone);
+    setCombo(0);
+    flashBad();
+    sfxBad();
+    setPassing(true);
+    keySinceSubmit.current = false;
+    submittedAt.current = performance.now();
+    if (input.current) input.current.value = '';
+    setValue('');
+    setTimeout(() => {
+      setPassing(false);
+      advance();
+    }, 700);
+  }, [ended, passing, bone, flashBad, advance]);
 
   const submit = useCallback(() => {
     const v = kind === 'word' ? value.trim() : value.replace(/\s+$/, '');
+    if (study && norm(v, lang) !== norm(target, lang)) {
+      if (v.length) miss();
+      return;
+    }
     if (norm(v, lang) !== norm(target, lang)) {
       if (v.length) {
         stats.current.errors++;
@@ -204,13 +255,18 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     sfxWord(nextCombo);
     stats.current.clean = true;
     lastOk.current = true;
+    solved.current.add(bone.id);
     setBursts((b) => [...b.slice(-4), performance.now()]);
     advance();
-  }, [value, target, kind, lang, finish, flashBad, combo, advance]);
+  }, [value, target, kind, lang, finish, flashBad, combo, advance, study, miss, bone]);
 
   // 패스: 그 낱말의 글자(자모) 수만큼 오타로 치고, 정답을 1초 보여 준 뒤 넘어감
   const pass = useCallback(() => {
     if (ended || passing) return;
+    if (study) {
+      miss();
+      return;
+    }
     stats.current.errors += units(target, lang).length;
     stats.current.clean = false;
     passes.current++;
@@ -226,7 +282,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
       setPassing(false);
       advance();
     }, 1000);
-  }, [ended, passing, target, lang, advance]);
+  }, [ended, passing, target, lang, advance, study, miss]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (ended || passing) {
@@ -284,6 +340,20 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
         <button className="ghost-btn" onClick={onQuit}>
           {t('quit')}<span className="esc"> Esc</span>
         </button>
+        {study ? (
+          <div className="hud-stats study">
+            <span className="stopwatch">
+              <b>{formatTime(s.start ? (s.end || performance.now()) - s.start : 0)}</b>
+            </span>
+            <span>
+              <b>{solved.current.size}</b>/{pool.length}
+            </span>
+            {studyRound > 1 ? <span className="study-round">{t('studyRound', {n: studyRound})}</span> : null}
+            <span className="study-miss">
+              {t('studyMiss')} <b>{misses.current}</b>
+            </span>
+          </div>
+        ) : (
         <div className="hud-stats">
           {blind ? <span className={`blind-badge ${revealed ? 'peek' : ''}`}>{revealed ? t('peek') : 'BLIND'}</span> : null}
           <span>
@@ -296,6 +366,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
             <b>{idx + 1}</b>/{queue.length}
           </span>
         </div>
+        )}
         <div className="hud-right">
         <SoundToggle />
         <div className={`combo ${combo >= 2 ? 'on' : ''}`} key={combo}>
@@ -308,7 +379,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
         </div>
       </div>
       <div className="progress">
-        <div style={{width: `${(idx / queue.length) * 100}%`}} />
+        <div style={{width: `${(study ? solved.current.size / pool.length : idx / queue.length) * 100}%`}} />
       </div>
 
       <div className="stage">

@@ -5,7 +5,8 @@ import {MUSCLES} from './data/muscles';
 import {modeLabel, modeOf, parseMode, type Category} from './lib/modes';
 import {setUi, t, useUi, type Ui} from './lib/i18n';
 import {Game, type Kind, type Result, type Term} from './Game';
-import {ResultModal} from './components/ResultModal';
+import {ResultModal, StudyResult} from './components/ResultModal';
+import {PARTS, formatTime, getBest, partLabel, partOf, saveBest, studyKey, type Part} from './lib/study';
 import {SoundToggle} from './components/SoundToggle';
 import {beginRound, startRound, logClick, checkNickname, formatCode, getShared, getToken, isShared, newToken, parseCode, setToken, submitScore, topScores, type Mode, type Score} from './lib/ranking';
 import {initSound, setTheme, startBgm} from './lib/sound';
@@ -96,6 +97,24 @@ export default function App() {
       /* 무시 */
     }
   };
+  // 학습 모드 (낱말만 · 고른 영역 전부 · 시간 기록) — 이 브라우저에 기억. 영역은 처음엔 전부 선택
+  const [study, setStudyState] = useState(() => {
+    try {
+      return localStorage.getItem('bone-typing:study') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const setStudy = (on: boolean) => {
+    setStudyState(on);
+    try {
+      localStorage.setItem('bone-typing:study', on ? '1' : '0');
+    } catch {
+      /* 무시 */
+    }
+  };
+  const [parts, setParts] = useState<Record<Category, Part[]>>(() => ({bone: [...PARTS.bone], muscle: [...PARTS.muscle]}));
+  const [studyRes, setStudyRes] = useState<{result: Result; best: number | null; newBest: boolean} | null>(null);
   const [lang, setLang] = useState<Lang>(() => (ui === 'en' ? 'en' : 'ko'));
   const [kind, setKind] = useState<Kind>('word');
   const [nick, setNick] = useState(readNick);
@@ -131,13 +150,34 @@ export default function App() {
     });
   }, []);
   // 블라인드는 낱말 연습에서만 (문장은 외워 칠 수 없음) — 켜 둔 설정은 낱말로 돌아오면 다시 적용
-  const blindOn = blind && kind === 'word';
+  const blindOn = blind && kind === 'word' && !study;
+  const fullPool = cat === 'muscle' ? MUSCLES : BONES;
+  const studyPool = fullPool.filter((b) => parts[cat].includes(partOf(b, cat)));
+  const studyId = studyKey(cat, lang, term, parts[cat]);
+  const studyBest = getBest(studyId);
+  const togglePart = (p: Part) =>
+    setParts((all) => {
+      const cur = all[cat];
+      const next = cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p];
+      return next.length ? {...all, [cat]: next} : all; // 하나는 남김
+    });
   useEffect(() => setTheme(blindOn ? 'blind' : 'normal'), [blindOn]);
   const mode = modeOf(cat, lang, kind, blindOn);
 
   useEffect(() => preloadModels(cat === 'muscle' ? ['muscle_upper', 'muscle_lower', 'muscle_trunk', 'muscle_head'] : ['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot', 'skull', 'thorax']), [cat]);
 
   const start = async () => {
+    if (study) {
+      if (!studyPool.length) return;
+      initSound();
+      startBgm();
+      setStudyRes(null);
+      setResult(null);
+      setRoundInfo(null);
+      setRound((r) => r + 1);
+      setScreen('game');
+      return;
+    }
     const n = nick.trim().slice(0, 12);
     if (!n || checking) return;
     initSound();
@@ -207,6 +247,12 @@ export default function App() {
 
   // 끝나면 게임 화면 위에 결과 팝업 (확인을 눌러야 메인으로)
   const done = async (res: Result) => {
+    if (res.study) {
+      const before = getBest(studyId);
+      const newBest = saveBest(studyId, res.duration_ms);
+      setStudyRes({result: res, best: before, newBest});
+      return;
+    }
     let r = res;
     setResult(r);
     setSaved('saving');
@@ -269,7 +315,7 @@ export default function App() {
             <span className="logo-king">타자연습</span>
             <span className="logo-sub">BONE NAME TYPING</span>
           </div>
-          <div className="og-desc">뼈 48개 · 근육 83개를 3D로 보며 타자 연습 · 랭킹 도전</div>
+          <div className="og-desc">뼈 73개 · 근육 113개를 3D로 보며 타자 연습 · 랭킹 도전</div>
         </div>
         <div className="og-stage">
           <BoneStage items={IDLE} bad={false} bursts={[]} />
@@ -286,7 +332,24 @@ export default function App() {
   if (screen === 'game')
     return (
       <>
-        <Game key={round} cat={cat} pool={cat === 'muscle' ? MUSCLES : BONES} lang={lang} kind={kind} term={term} blind={blindOn} order={roundInfo?.items} onFirstKey={() => roundInfo && beginRound(roundInfo.round)} onDone={done} onQuit={() => setScreen('title')} />
+        {study ? (
+          <Game key={round} cat={cat} pool={studyPool} lang={lang} kind="word" term={term} blind={false} study onDone={done} onQuit={() => setScreen('title')} />
+        ) : (
+          <Game key={round} cat={cat} pool={fullPool} lang={lang} kind={kind} term={term} blind={blindOn} order={roundInfo?.items} onFirstKey={() => roundInfo && beginRound(roundInfo.round)} onDone={done} onQuit={() => setScreen('title')} />
+        )}
+        {studyRes ? (
+          <StudyResult
+            result={studyRes.result}
+            label={[t(cat), lang === 'ko' ? t(term) : 'English', parts[cat].length === PARTS[cat].length ? t('scopeAll') : parts[cat].map((p) => partLabel(p, cat)).join('·')].join(' · ')}
+            best={studyRes.best}
+            newBest={studyRes.newBest}
+            onOk={() => {
+              setStudyRes(null);
+              setScreen('title');
+            }}
+            onAgain={start}
+          />
+        ) : null}
         {result ? (
           <ResultModal
             result={result}
@@ -319,7 +382,7 @@ export default function App() {
       <div className="title-stage">
         <BoneStage items={cat === 'muscle' ? IDLE_MUSCLE : IDLE} bad={false} bursts={[]} />
       </div>
-      <div className="title-panel">
+      <div className={`title-panel ${study ? 'study' : ''}`}>
         {screen === 'title' ? (
           <>
             {/* 화면 언어 */}
@@ -343,7 +406,15 @@ export default function App() {
               <span className="logo-king">{t('logo2')}</span>
               <span className="logo-sub">{cat === 'muscle' ? 'BONE NAME TYPING · MUSCLE EDITION' : 'BONE NAME TYPING'}</span>
             </div>
-            {vs ? <div className="vs">{t('vs', {n: vs.nickname, s: vs.score, m: modeLabel(vs.mode), r: vs.rank})}</div> : null}
+            <div className="seg mode">
+              <button className={!study ? 'on' : ''} onClick={() => setStudy(false)}>
+                {t('modeRanked')}
+              </button>
+              <button className={study ? 'on' : ''} onClick={() => setStudy(true)}>
+                {t('modeStudy')}
+              </button>
+            </div>
+            {vs && !study ? <div className="vs">{t('vs', {n: vs.nickname, s: vs.score, m: modeLabel(vs.mode), r: vs.rank})}</div> : null}
             <div className="seg">
               <button className={cat === 'bone' ? 'on' : ''} onClick={() => setCat('bone')}>
                 {t('bone')}
@@ -371,6 +442,32 @@ export default function App() {
                 </button>
               </div>
             ) : null}
+            {study ? (
+              <>
+                <div className="note study-note">{t('studyNote')}</div>
+                <div className="parts" role="group" aria-label={t('studyParts')}>
+                  {PARTS[cat].map((p) => {
+                    const n = fullPool.filter((b) => partOf(b, cat) === p).length;
+                    const on = parts[cat].includes(p);
+                    return (
+                      <button key={p} className={on ? 'on' : ''} aria-pressed={on} onClick={() => togglePart(p)}>
+                        <span className="part-check">{on ? '✓' : ''}</span>
+                        {partLabel(p, cat)}
+                        <small>{n}</small>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button className="start" onClick={start}>
+                  {t('studyStart', {n: studyPool.length})}
+                </button>
+                <div className="study-best">
+                  {t('studyBest')} <b>{studyBest != null ? formatTime(studyBest) : '—'}</b>
+                </div>
+                <SoundToggle />
+              </>
+            ) : (
+              <>
             <div className="seg">
               <button className={kind === 'word' ? 'on' : ''} onClick={() => setKind('word')}>
                 {t('word')}
@@ -435,6 +532,8 @@ export default function App() {
             ) : null}
             <SoundToggle />
             <Board mode={mode} me={nick} refresh={refresh} />
+              </>
+            )}
           </>
         ) : null}
         <div className="credit">
