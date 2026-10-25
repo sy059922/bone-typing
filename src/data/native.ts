@@ -14,6 +14,11 @@ export const NATIVE_NAME: Record<string, string> = {
   talus: '목말뼈', calcaneus: '발꿈치뼈', navicular: '발배뼈', cuboid: '입방뼈', cun_med: '안쪽쐐기뼈', cun_int: '중간쐐기뼈', cun_lat: '가쪽쐐기뼈',
   metatarsal: '발허리뼈', foot_pp: '첫마디뼈', foot_mp: '중간마디뼈', foot_dp: '끝마디뼈',
   // 뼈 — 묶음
+  // 뼈 — 머리 · 가슴
+  frontal: '이마뼈', parietal: '마루뼈', temporal: '관자뼈', occipital: '뒤통수뼈', sphenoid: '나비뼈', ethmoid: '벌집뼈', nasal: '코뼈', lacrimal: '눈물뼈',
+  zygomatic: '광대뼈', maxilla: '위턱뼈', mandible: '아래턱뼈', palatine: '입천장뼈', vomer: '보습뼈', concha: '아래코선반', hyoid: '목뿔뼈',
+  sternum: '복장뼈', manubrium: '복장뼈자루', sternal_body: '복장뼈몸통', xiphoid: '칼돌기', ribs: '갈비뼈', first_rib: '첫째갈비뼈', floating_ribs: '뜬갈비뼈',
+  costal_cartilage: '갈비연골', skull: '머리뼈', rib_cage: '가슴우리',
   spine: '척주', carpals: '손목뼈', tarsals: '발목뼈', phalanges: '손가락뼈', ilium: '엉덩뼈', ischium: '궁둥뼈', pubis: '두덩뼈', pelvis: '골반',
   // 근육 — 어깨
   deltoid: '어깨세모근', supraspinatus: '가시위근', infraspinatus: '가시아래근', teres_minor: '작은원근', teres_major: '큰원근', subscapularis: '어깨밑근',
@@ -38,8 +43,16 @@ export const NATIVE_NAME: Record<string, string> = {
   fibularis_longus: '긴종아리근', fibularis_brevis: '짧은종아리근', ehl: '긴엄지폄근', fhl: '긴엄지굽힘근', edl: '긴발가락폄근', fdl: '긴발가락굽힘근',
   // 근육 — 발 · 목 · 몸통
   abductor_hallucis: '엄지벌림근', fdb: '짧은발가락굽힘근', scm: '목빗근', external_oblique: '배바깥빗근',
+  internal_oblique: '배속빗근', transversus_abdominis: '배가로근', rectus_abdominis: '배곧은근', quadratus_lumborum: '허리네모근', latissimus_dorsi: '넓은등근',
+  erector_spinae: '척주세움근', multifidus: '뭇갈래근', splenius_capitis: '머리널판근', semispinalis_capitis: '머리반가시근', diaphragm: '가로막',
+  external_intercostal: '바깥갈비사이근', internal_intercostal: '속갈비사이근', levator_ani: '항문올림근',
+  // 근육 — 목 · 머리
+  scalenes: '목갈비근', platysma: '넓은목근', digastric: '두힘살근', mylohyoid: '턱목뿔근', sternohyoid: '복장목뿔근', omohyoid: '어깨목뿔근',
+  masseter: '깨물근', temporalis: '관자근', medial_pterygoid: '안쪽날개근', lateral_pterygoid: '가쪽날개근', orbicularis_oculi: '눈둘레근',
+  orbicularis_oris: '입둘레근', zygomaticus_major: '큰광대근', buccinator: '볼근', mentalis: '턱끝근',
   // 근육 — 묶음
   rotator_cuff: '돌림근띠', quadriceps: '넙다리네갈래근', hamstrings: '뒤넙다리근', adductor_group: '모음근무리', triceps_surae: '종아리세갈래근', iliopsoas: '엉덩허리근',
+  abdominals: '배근육', masticatory: '씹기근육',
 };
 
 // 문장 속 용어 (게임 낱말 + 신경 · 관절 · 구조물). 긴 낱말부터 바꿈
@@ -80,6 +93,23 @@ const TERMS: Record<string, string> = {
   족저근: '장딴지빗근', 슬와근: '오금근', 전경골근: '앞정강근', 후경골근: '뒤정강근', 장비골근: '긴종아리근', 단비골근: '짧은종아리근', 장지신근: '긴발가락폄근',
   장지굴근: '긴발가락굽힘근', 무지외전근: '엄지벌림근', 단지굴근: '짧은발가락굽힘근', 흉쇄유돌근: '목빗근', 외복사근: '배바깥빗근', 회전근개: '돌림근띠',
   대퇴사두근: '넙다리네갈래근', 슬괵근: '뒤넙다리근', 내전근군: '모음근무리', 하퇴삼두근: '종아리세갈래근', 장요근: '엉덩허리근',
+  // 머리 · 가슴 뼈 (비골 · 관골 은 다리 · 골반 뼈와 이름이 같아 문장은 NATIVE_SENTENCE 로)
+  전두골: '이마뼈', 두정골: '마루뼈', 측두골: '관자뼈', 후두골: '뒤통수뼈', 접형골: '나비뼈', 사골: '벌집뼈', 누골: '눈물뼈', 상악골: '위턱뼈', 하악골: '아래턱뼈',
+  구개골: '입천장뼈', 서골: '보습뼈', 하비갑개: '아래코선반', 설골: '목뿔뼈', 안면골: '얼굴뼈', 두개골: '머리뼈', 흉골: '복장뼈', 흉골병: '복장뼈자루',
+  흉골체: '복장뼈몸통', 검상돌기: '칼돌기', 늑연골: '갈비연골', 부유늑골: '뜬갈비뼈', 흉곽: '가슴우리', 제1늑골: '첫째갈비뼈', 제2늑골: '둘째갈비뼈',
+  제11늑골: '열한째갈비뼈', 제12늑골: '열두째갈비뼈', 흉골각: '복장뼈각',
+  // 머리 · 가슴 구조물 · 신경 · 혈관
+  전두동: '이마굴', 상악동: '위턱굴', 시상봉합: '시상봉합', 내이: '속귀', 대후두공: '큰구멍', 터키안: '안장', 사판: '체판', 후각신경: '후각신경',
+  측두하악관절: '턱관절', 경구개: '단단입천장', 비중격: '코중격', '비강 외측벽': '코안 가쪽벽', 쇄골하동맥: '빗장밑동맥', 뇌두개: '뇌머리뼈', 안면두개: '얼굴머리뼈',
+  건획: '나눔힘줄', 흉배신경: '가슴등신경', 장늑근: '엉덩갈비근', 최장근: '가장긴근', 극근: '가시근', 횡격신경: '가로막신경', 골반저: '골반바닥',
+  상완신경총: '팔신경얼기', 전복: '앞힘살', 후복: '뒤힘살', 상복: '위힘살', 하복: '아래힘살', 중간건: '중간힘줄', 구강저: '입안바닥', 근돌기: '근육돌기',
+  안면신경: '얼굴신경',
+  // 몸통 · 목 · 머리 근육 (문장 안)
+  내복사근: '배속빗근', 복횡근: '배가로근', 복직근: '배곧은근', 요방형근: '허리네모근', 광배근: '넓은등근', 척추기립근: '척주세움근', 다열근: '뭇갈래근',
+  두판상근: '머리널판근', 두반극근: '머리반가시근', 횡격막: '가로막', 외늑간근: '바깥갈비사이근', 내늑간근: '속갈비사이근', 항문거근: '항문올림근',
+  사각근: '목갈비근', 전사각근: '앞목갈비근', 중사각근: '중간목갈비근', 광경근: '넓은목근', 이복근: '두힘살근', 악설골근: '턱목뿔근', 흉골설골근: '복장목뿔근',
+  견갑설골근: '어깨목뿔근', 교근: '깨물근', 측두근: '관자근', 내측익돌근: '안쪽날개근', 외측익돌근: '가쪽날개근', 안륜근: '눈둘레근', 구륜근: '입둘레근',
+  대관골근: '큰광대근', 협근: '볼근', 복근: '배근육', 저작근: '씹기근육',
 };
 
 const KEYS = Object.keys(TERMS).sort((a, b) => b.length - a.length);
@@ -123,6 +153,9 @@ const fixParticle = (word: string, rest: string): [string, number] => {
 // 그대로 바꾸면 어색한 문장은 통째로 (id → 우리말 문장)
 export const NATIVE_SENTENCE: Record<string, string> = {
   coccyx: '꼬리뼈는 엉덩방아를 찧으면 다치기 쉬운 작은 뼈다.',
+  nasal: '코뼈 골절은 얼굴뼈 골절 가운데 가장 흔하다.',
+  zygomatic: '광대뼈는 뺨의 도드라진 부분을 이룬다.',
+  mentalis: '턱끝근은 턱끝 피부를 올려 아랫입술을 내밀게 한다.',
 };
 
 export function toNative(text: string): string {

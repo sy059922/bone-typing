@@ -12,7 +12,8 @@
     "BodyParts3D has no separate coccyx mesh: its sacrum mesh includes the coccygeal segments. \"coccyx\" was cut from it with a horizontal plane at the sacrococcygeal level and both cut faces were capped.",
     "BodyParts3D has no separate ilium/ischium/pubis meshes: pelvis.glb uses whole hip bones (hip_r, hip_l).",
     "Thumb has no middle phalanx (mp1) and big toe has no middle phalanx (fmp1), as in real anatomy. Little toe middle and distal phalanges are separate meshes (fmp5, fdp5).",
-    "muscle_*.glb come from BodyParts3D 4.0 (isa_BP3D_4.0_obj_99), a different reconstruction from the 3.0 bones in spine/arm/hand/pelvis/leg/foot.glb: upper-limb bones sit ~10-17 mm lower, leg bones are longer (femur 466 vs 440 mm, tibia 380 vs 347 mm). Show muscles with the context bones inside the same muscle file (nodes \"b_*\", extras.kind = \"bone\"), not over the 3.0 bone files.",
+    "muscle_trunk.glb and muscle_head.glb come from BodyParts3D 3.0 (obj_95), the same reconstruction as the bone files; both sides of each muscle are merged into one node.",
+    "muscle_upper.glb and muscle_lower.glb come from BodyParts3D 4.0 (isa_BP3D_4.0_obj_99), a different reconstruction from the 3.0 bones in spine/arm/hand/pelvis/leg/foot.glb: upper-limb bones sit ~10-17 mm lower, leg bones are longer (femur 466 vs 440 mm, tibia 380 vs 347 mm). Show muscles with the context bones inside the same muscle file (nodes \"b_*\", extras.kind = \"bone\"), not over the 3.0 bone files.",
     "muscle_*.glb: muscle nodes have extras.kind = \"muscle\" and material \"muscle\"; branches/heads/parts of one muscle are merged into one node (extras.name_en lists them). Small muscles were Loop-subdivided for smooth shading (volume change <= 6%)."
   ],
   "files": {
@@ -1449,57 +1450,955 @@
       "missing": []
     },
     "muscle_trunk.glb": {
-      "source": "BodyParts3D 4.0 isa_BP3D_4.0_obj_99 (DBCLS), CC BY-SA 2.1 JP",
-      "bytes": 417072,
-      "triangles": 63988,
+      "source": "BodyParts3D 3.0 obj_95 (DBCLS), CC BY-SA 2.1 JP",
+      "bytes": 1470400,
+      "triangles": 227381,
       "nodes": {
         "sternocleidomastoid": {
           "kind": "muscle",
           "bbox": {
-            "min": [-0.06304, 1.30197, 0.03725],
-            "max": [-0.00185, 1.50319, 0.15691]
+            "min": [-0.06009, 1.32465, 0.05013],
+            "max": [0.05879, 1.51232, 0.1603]
           },
-          "triangles": 8998
+          "triangles": 6978
         },
         "external_oblique": {
           "kind": "muscle",
           "bbox": {
-            "min": [-0.14082, 0.79376, 0.03702],
-            "max": [-0.00351, 1.21158, 0.21877]
+            "min": [-0.13909, 0.80977, 0.03872],
+            "max": [0.13809, 1.2286, 0.21852]
           },
-          "triangles": 8998
+          "triangles": 9466
+        },
+        "internal_oblique": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.12394, 0.80984, 0.04628],
+            "max": [0.12228, 1.188, 0.21611]
+          },
+          "triangles": 8910
+        },
+        "transversus_abdominis": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.12919, 0.80142, 0.03663],
+            "max": [0.12789, 1.20902, 0.19863]
+          },
+          "triangles": 8552
+        },
+        "rectus_abdominis": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.07971, 0.80982, 0.14147],
+            "max": [0.07824, 1.20496, 0.21374]
+          },
+          "triangles": 7000
+        },
+        "quadratus_lumborum": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.06739, 0.89753, 0.02636],
+            "max": [0.06622, 1.09729, 0.07009]
+          },
+          "triangles": 6998
+        },
+        "latissimus_dorsi": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.17924, 0.88885, -0.01832],
+            "max": [0.17875, 1.28609, 0.08105]
+          },
+          "triangles": 9185
+        },
+        "erector_spinae": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.1007, 0.84261, -0.00173],
+            "max": [0.1006, 1.50707, 0.08808]
+          },
+          "triangles": 6998
+        },
+        "multifidus": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.038, 0.84395, 0.00525],
+            "max": [0.03683, 1.4591, 0.07]
+          },
+          "triangles": 6986
+        },
+        "splenius_capitis": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.05927, 1.30152, -0.00211],
+            "max": [0.05861, 1.5104, 0.0796]
+          },
+          "triangles": 6996
+        },
+        "semispinalis_capitis": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.04354, 1.39007, 0.021],
+            "max": [0.0422, 1.51021, 0.07767]
+          },
+          "triangles": 6960
+        },
+        "diaphragm": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.1227, 0.99297, 0.03278],
+            "max": [0.1207, 1.20913, 0.19694]
+          },
+          "triangles": 7606
+        },
+        "external_intercostal": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.13699, 1.02239, 0.00332],
+            "max": [0.13578, 1.38255, 0.192]
+          },
+          "triangles": 23146
+        },
+        "internal_intercostal": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.1352, 1.0306, 0.00666],
+            "max": [0.1338, 1.35, 0.20644]
+          },
+          "triangles": 24830
+        },
+        "scalenes": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.06832, 1.35296, 0.05931],
+            "max": [0.06683, 1.45754, 0.10608]
+          },
+          "triangles": 6996
+        },
+        "levator_ani": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.04508, 0.77128, 0.02482],
+            "max": [0.04377, 0.8274, 0.11803]
+          },
+          "triangles": 13780
         },
         "b_skull": {
           "kind": "bone",
           "bbox": {
-            "min": [-0.07618, 1.42175, -0.01792],
-            "max": [0.07486, 1.63624, 0.19083]
+            "min": [-0.07236, 1.43589, -0.00206],
+            "max": [0.07131, 1.6382, 0.19497]
           },
           "triangles": 15994
         },
         "b_cervical": {
           "kind": "bone",
           "bbox": {
-            "min": [-0.04136, 1.36471, 0.02127],
-            "max": [0.04023, 1.48143, 0.09167]
+            "min": [-0.04233, 1.37982, 0.02286],
+            "max": [0.04194, 1.49051, 0.10088]
           },
           "triangles": 8000
         },
         "b_thorax": {
           "kind": "bone",
           "bbox": {
-            "min": [-0.14528, 1.00813, 0.00396],
-            "max": [0.14371, 1.37038, 0.21369]
+            "min": [-0.14995, 1.00985, 0.00363],
+            "max": [0.14836, 1.38745, 0.20765]
           },
-          "triangles": 11998
+          "triangles": 12000
+        },
+        "b_spine_tl": {
+          "kind": "bone",
+          "bbox": {
+            "min": [-0.05174, 0.91406, 0.00007],
+            "max": [0.04891, 1.39378, 0.11667]
+          },
+          "triangles": 12000
         },
         "b_pelvis": {
           "kind": "bone",
           "bbox": {
-            "min": [-0.14487, 0.75195, -0.00725],
-            "max": [0.14475, 0.95809, 0.13902]
+            "min": [-0.13122, 0.75892, 0.00563],
+            "max": [0.13184, 0.96722, 0.15223]
           },
           "triangles": 10000
+        },
+        "b_arms": {
+          "kind": "bone",
+          "bbox": {
+            "min": [-0.24145, 1.0395, -0.01121],
+            "max": [0.24014, 1.35984, 0.09904]
+          },
+          "triangles": 8000
+        }
+      },
+      "missing": []
+    },
+    "skull.glb": {
+      "bytes": 763904,
+      "triangles": 112272,
+      "nodes": {
+        "frontal": {
+          "bbox": {
+            "min": [-0.05984, 1.52908, 0.11534],
+            "max": [0.05851, 1.63225, 0.1822]
+          },
+          "triangles": 6000
+        },
+        "parietal_r": {
+          "bbox": {
+            "min": [-0.07263, 1.52627, 0.00076],
+            "max": [0.00482, 1.63822, 0.13558]
+          },
+          "triangles": 5998
+        },
+        "parietal_l": {
+          "bbox": {
+            "min": [-0.00779, 1.52632, 0.00051],
+            "max": [0.07135, 1.63821, 0.13923]
+          },
+          "triangles": 6000
+        },
+        "temporal_r": {
+          "bbox": {
+            "min": [-0.07073, 1.48652, 0.04778],
+            "max": [-0.01191, 1.55866, 0.14122]
+          },
+          "triangles": 6000
+        },
+        "temporal_l": {
+          "bbox": {
+            "min": [0.01062, 1.48642, 0.04782],
+            "max": [0.06943, 1.55859, 0.14107]
+          },
+          "triangles": 6000
+        },
+        "occipital": {
+          "bbox": {
+            "min": [-0.05864, 1.48849, -0.00221],
+            "max": [0.05731, 1.58961, 0.1102]
+          },
+          "triangles": 6000
+        },
+        "sphenoid": {
+          "bbox": {
+            "min": [-0.05329, 1.48949, 0.09997],
+            "max": [0.05199, 1.55553, 0.15183]
+          },
+          "triangles": 5998
+        },
+        "ethmoid": {
+          "bbox": {
+            "min": [-0.02025, 1.50656, 0.12966],
+            "max": [0.01556, 1.54129, 0.17225]
+          },
+          "triangles": 3342
+        },
+        "nasal_r": {
+          "bbox": {
+            "min": [-0.00874, 1.51068, 0.1747],
+            "max": [-0.00044, 1.54105, 0.19503]
+          },
+          "triangles": 1024
+        },
+        "nasal_l": {
+          "bbox": {
+            "min": [-0.00271, 1.51128, 0.1744],
+            "max": [0.00703, 1.54133, 0.19368]
+          },
+          "triangles": 1124
+        },
+        "lacrimal_r": {
+          "bbox": {
+            "min": [-0.01719, 1.51011, 0.15743],
+            "max": [-0.00687, 1.53448, 0.17168]
+          },
+          "triangles": 1114
+        },
+        "lacrimal_l": {
+          "bbox": {
+            "min": [0.00667, 1.5074, 0.15691],
+            "max": [0.01709, 1.53511, 0.17057]
+          },
+          "triangles": 1152
+        },
+        "zygomatic_r": {
+          "bbox": {
+            "min": [-0.06106, 1.49127, 0.12955],
+            "max": [-0.03123, 1.54441, 0.16728]
+          },
+          "triangles": 3000
+        },
+        "zygomatic_l": {
+          "bbox": {
+            "min": [0.02987, 1.49122, 0.12952],
+            "max": [0.05973, 1.54437, 0.16724]
+          },
+          "triangles": 3000
+        },
+        "maxilla_r": {
+          "bbox": {
+            "min": [-0.04504, 1.47558, 0.13668],
+            "max": [0, 1.54119, 0.18877]
+          },
+          "triangles": 6000
+        },
+        "maxilla_l": {
+          "bbox": {
+            "min": [-0.00338, 1.47548, 0.13434],
+            "max": [0.04331, 1.54124, 0.18755]
+          },
+          "triangles": 5998
+        },
+        "mandible": {
+          "bbox": {
+            "min": [-0.05087, 1.43565, 0.09957],
+            "max": [0.04951, 1.5155, 0.17892]
+          },
+          "triangles": 6000
+        },
+        "palatine_r": {
+          "bbox": {
+            "min": [-0.02683, 1.48192, 0.12186],
+            "max": [-0.00121, 1.52079, 0.15596]
+          },
+          "triangles": 3000
+        },
+        "palatine_l": {
+          "bbox": {
+            "min": [-0.00342, 1.4811, 0.1192],
+            "max": [0.02237, 1.51923, 0.15793]
+          },
+          "triangles": 3000
+        },
+        "vomer": {
+          "bbox": {
+            "min": [-0.00621, 1.49495, 0.11818],
+            "max": [0.00347, 1.5183, 0.17737]
+          },
+          "triangles": 2422
+        },
+        "concha_r": {
+          "bbox": {
+            "min": [-0.01502, 1.48979, 0.13738],
+            "max": [-0.00487, 1.51159, 0.17093]
+          },
+          "triangles": 1616
+        },
+        "concha_l": {
+          "bbox": {
+            "min": [0.00257, 1.49302, 0.13994],
+            "max": [0.0126, 1.50813, 0.17386]
+          },
+          "triangles": 1484
+        },
+        "hyoid": {
+          "bbox": {
+            "min": [-0.02159, 1.43106, 0.10082],
+            "max": [0.0203, 1.44995, 0.13566]
+          },
+          "triangles": 3000
+        },
+        "teeth_upper": {
+          "bbox": {
+            "min": [-0.02945, 1.46416, 0.14227],
+            "max": [0.0281, 1.49515, 0.18808]
+          },
+          "triangles": 6000
+        },
+        "teeth_lower": {
+          "bbox": {
+            "min": [-0.0316, 1.44104, 0.13432],
+            "max": [0.03031, 1.47505, 0.18352]
+          },
+          "triangles": 6000
+        },
+        "C1": {
+          "bbox": {
+            "min": [-0.04233, 1.47116, 0.0532],
+            "max": [0.04194, 1.49058, 0.10088]
+          },
+          "triangles": 3000
+        },
+        "C2": {
+          "bbox": {
+            "min": [-0.02655, 1.44765, 0.0472],
+            "max": [0.02544, 1.48926, 0.0983]
+          },
+          "triangles": 3000
+        },
+        "C3": {
+          "bbox": {
+            "min": [-0.02797, 1.43253, 0.04561],
+            "max": [0.02702, 1.45833, 0.09807]
+          },
+          "triangles": 3000
+        },
+        "C4": {
+          "bbox": {
+            "min": [-0.02866, 1.42051, 0.04653],
+            "max": [0.02705, 1.44475, 0.09769]
+          },
+          "triangles": 3000
+        }
+      },
+      "missing": []
+    },
+    "thorax.glb": {
+      "bytes": 920592,
+      "triangles": 133996,
+      "nodes": {
+        "manubrium": {
+          "bbox": {
+            "min": [-0.02829, 1.29404, 0.12848],
+            "max": [0.02695, 1.34624, 0.17904]
+          },
+          "triangles": 3000
+        },
+        "sternum_body": {
+          "bbox": {
+            "min": [-0.02406, 1.18711, 0.16484],
+            "max": [0.02268, 1.3026, 0.20656]
+          },
+          "triangles": 3000
+        },
+        "xiphoid": {
+          "bbox": {
+            "min": [-0.01119, 1.169, 0.1907],
+            "max": [0.00986, 1.19105, 0.20561]
+          },
+          "triangles": 3000
+        },
+        "r1": {
+          "bbox": {
+            "min": [-0.06953, 1.33004, 0.0654],
+            "max": [-0.01639, 1.38753, 0.13381]
+          },
+          "triangles": 2500
+        },
+        "l1": {
+          "bbox": {
+            "min": [0.01333, 1.33044, 0.06551],
+            "max": [0.0672, 1.38747, 0.13378]
+          },
+          "triangles": 2500
+        },
+        "r2": {
+          "bbox": {
+            "min": [-0.09682, 1.28931, 0.05403],
+            "max": [-0.01735, 1.37768, 0.16239]
+          },
+          "triangles": 2500
+        },
+        "l2": {
+          "bbox": {
+            "min": [0.01505, 1.28935, 0.05372],
+            "max": [0.09453, 1.37918, 0.16237]
+          },
+          "triangles": 2500
+        },
+        "r3": {
+          "bbox": {
+            "min": [-0.10958, 1.25608, 0.03709],
+            "max": [-0.01713, 1.35848, 0.17186]
+          },
+          "triangles": 2500
+        },
+        "l3": {
+          "bbox": {
+            "min": [0.01481, 1.25608, 0.03708],
+            "max": [0.10726, 1.35846, 0.17181]
+          },
+          "triangles": 2500
+        },
+        "r4": {
+          "bbox": {
+            "min": [-0.12202, 1.22397, 0.02335],
+            "max": [-0.01598, 1.33729, 0.18771]
+          },
+          "triangles": 2500
+        },
+        "l4": {
+          "bbox": {
+            "min": [0.01368, 1.22364, 0.02337],
+            "max": [0.11971, 1.33724, 0.18762]
+          },
+          "triangles": 2500
+        },
+        "r5": {
+          "bbox": {
+            "min": [-0.12773, 1.18887, 0.0135],
+            "max": [-0.01563, 1.31083, 0.19668]
+          },
+          "triangles": 2500
+        },
+        "l5": {
+          "bbox": {
+            "min": [0.01331, 1.18891, 0.01348],
+            "max": [0.12544, 1.31078, 0.19664]
+          },
+          "triangles": 2500
+        },
+        "r6": {
+          "bbox": {
+            "min": [-0.13501, 1.15437, 0.00363],
+            "max": [-0.01589, 1.28852, 0.19356]
+          },
+          "triangles": 2500
+        },
+        "l6": {
+          "bbox": {
+            "min": [0.01361, 1.15443, 0.00363],
+            "max": [0.13271, 1.28852, 0.19354]
+          },
+          "triangles": 2500
+        },
+        "r7": {
+          "bbox": {
+            "min": [-0.13773, 1.1212, 0.00455],
+            "max": [-0.01659, 1.26094, 0.18028]
+          },
+          "triangles": 2500
+        },
+        "l7": {
+          "bbox": {
+            "min": [0.01437, 1.12124, 0.00449],
+            "max": [0.13539, 1.26093, 0.18023]
+          },
+          "triangles": 2500
+        },
+        "r8": {
+          "bbox": {
+            "min": [-0.13157, 1.08624, 0.00457],
+            "max": [-0.0175, 1.23283, 0.16274]
+          },
+          "triangles": 2500
+        },
+        "l8": {
+          "bbox": {
+            "min": [0.01518, 1.08624, 0.00456],
+            "max": [0.1293, 1.23283, 0.16269]
+          },
+          "triangles": 2500
+        },
+        "r9": {
+          "bbox": {
+            "min": [-0.12977, 1.0557, 0.00753],
+            "max": [-0.01823, 1.20583, 0.13569]
+          },
+          "triangles": 2498
+        },
+        "l9": {
+          "bbox": {
+            "min": [0.01592, 1.05573, 0.00754],
+            "max": [0.12744, 1.20584, 0.13564]
+          },
+          "triangles": 2498
+        },
+        "r10": {
+          "bbox": {
+            "min": [-0.12787, 1.02538, 0.01539],
+            "max": [-0.01858, 1.17716, 0.12122]
+          },
+          "triangles": 2500
+        },
+        "l10": {
+          "bbox": {
+            "min": [0.01627, 1.02541, 0.01537],
+            "max": [0.12558, 1.17716, 0.12123]
+          },
+          "triangles": 2500
+        },
+        "r11": {
+          "bbox": {
+            "min": [-0.11652, 1.01231, 0.0221],
+            "max": [-0.0199, 1.14007, 0.10069]
+          },
+          "triangles": 2500
+        },
+        "l11": {
+          "bbox": {
+            "min": [0.01758, 1.01234, 0.02211],
+            "max": [0.11421, 1.1401, 0.10067]
+          },
+          "triangles": 2500
+        },
+        "r12": {
+          "bbox": {
+            "min": [-0.08333, 1.00984, 0.03193],
+            "max": [-0.01944, 1.10457, 0.07489]
+          },
+          "triangles": 2500
+        },
+        "l12": {
+          "bbox": {
+            "min": [0.01813, 1.00985, 0.03194],
+            "max": [0.08201, 1.10458, 0.07487]
+          },
+          "triangles": 2500
+        },
+        "cc_r1": {
+          "bbox": {
+            "min": [-0.05371, 1.32168, 0.12445],
+            "max": [-0.02328, 1.34017, 0.14804]
+          },
+          "triangles": 1500
+        },
+        "cc_l1": {
+          "bbox": {
+            "min": [0.02198, 1.3217, 0.12475],
+            "max": [0.05208, 1.3408, 0.14803]
+          },
+          "triangles": 1500
+        },
+        "cc_r2": {
+          "bbox": {
+            "min": [-0.04515, 1.28729, 0.15335],
+            "max": [-0.0128, 1.30363, 0.17709]
+          },
+          "triangles": 1500
+        },
+        "cc_l2": {
+          "bbox": {
+            "min": [0.01148, 1.2873, 0.15307],
+            "max": [0.04363, 1.30396, 0.17708]
+          },
+          "triangles": 1500
+        },
+        "cc_r3": {
+          "bbox": {
+            "min": [-0.05178, 1.25569, 0.16444],
+            "max": [-0.01544, 1.27454, 0.18616]
+          },
+          "triangles": 1500
+        },
+        "cc_l3": {
+          "bbox": {
+            "min": [0.01412, 1.25577, 0.16445],
+            "max": [0.04933, 1.27453, 0.18615]
+          },
+          "triangles": 1500
+        },
+        "cc_r4": {
+          "bbox": {
+            "min": [-0.06913, 1.22328, 0.17965],
+            "max": [-0.01627, 1.25144, 0.19222]
+          },
+          "triangles": 1500
+        },
+        "cc_l4": {
+          "bbox": {
+            "min": [0.01497, 1.22329, 0.17962],
+            "max": [0.06765, 1.25144, 0.19221]
+          },
+          "triangles": 1500
+        },
+        "cc_r5": {
+          "bbox": {
+            "min": [-0.08278, 1.18815, 0.18803],
+            "max": [-0.01904, 1.22631, 0.20415]
+          },
+          "triangles": 1500
+        },
+        "cc_l5": {
+          "bbox": {
+            "min": [0.01772, 1.18814, 0.18806],
+            "max": [0.08134, 1.22628, 0.20415]
+          },
+          "triangles": 1500
+        },
+        "cc_r6": {
+          "bbox": {
+            "min": [-0.09371, 1.15394, 0.18472],
+            "max": [-0.01546, 1.20762, 0.2077]
+          },
+          "triangles": 1500
+        },
+        "cc_l6": {
+          "bbox": {
+            "min": [0.01419, 1.15394, 0.18495],
+            "max": [0.09231, 1.2076, 0.20765]
+          },
+          "triangles": 1500
+        },
+        "cc_r7": {
+          "bbox": {
+            "min": [-0.11074, 1.11831, 0.17052],
+            "max": [-0.0068, 1.19419, 0.20683]
+          },
+          "triangles": 1500
+        },
+        "cc_l7": {
+          "bbox": {
+            "min": [0.00549, 1.1183, 0.1707],
+            "max": [0.10935, 1.19419, 0.20682]
+          },
+          "triangles": 1500
+        },
+        "T1": {
+          "bbox": {
+            "min": [-0.03821, 1.36432, 0.01692],
+            "max": [0.03331, 1.39412, 0.08698]
+          },
+          "triangles": 3000
+        },
+        "T2": {
+          "bbox": {
+            "min": [-0.03688, 1.34502, 0.01143],
+            "max": [0.03296, 1.37954, 0.08209]
+          },
+          "triangles": 3000
+        },
+        "T3": {
+          "bbox": {
+            "min": [-0.03391, 1.32142, 0.00068],
+            "max": [0.02985, 1.36131, 0.07616]
+          },
+          "triangles": 3000
+        },
+        "T4": {
+          "bbox": {
+            "min": [-0.03491, 1.29772, 0.00007],
+            "max": [0.0336, 1.34146, 0.06981]
+          },
+          "triangles": 3000
+        },
+        "T5": {
+          "bbox": {
+            "min": [-0.03724, 1.26531, 0.00116],
+            "max": [0.0323, 1.3178, 0.0661]
+          },
+          "triangles": 3000
+        },
+        "T6": {
+          "bbox": {
+            "min": [-0.03737, 1.22925, 0.00091],
+            "max": [0.03239, 1.29064, 0.06553]
+          },
+          "triangles": 3000
+        },
+        "T7": {
+          "bbox": {
+            "min": [-0.03768, 1.20223, 0.00273],
+            "max": [0.03402, 1.26262, 0.06716]
+          },
+          "triangles": 3000
+        },
+        "T8": {
+          "bbox": {
+            "min": [-0.03456, 1.17378, 0.00078],
+            "max": [0.03261, 1.23321, 0.07214]
+          },
+          "triangles": 3000
+        },
+        "T9": {
+          "bbox": {
+            "min": [-0.03553, 1.14901, 0.0044],
+            "max": [0.03306, 1.20377, 0.07767]
+          },
+          "triangles": 3000
+        },
+        "T10": {
+          "bbox": {
+            "min": [-0.03702, 1.11774, 0.00867],
+            "max": [0.03333, 1.17517, 0.08412]
+          },
+          "triangles": 3000
+        },
+        "T11": {
+          "bbox": {
+            "min": [-0.02863, 1.09243, 0.01606],
+            "max": [0.02605, 1.14575, 0.09261]
+          },
+          "triangles": 3000
+        },
+        "T12": {
+          "bbox": {
+            "min": [-0.02314, 1.06335, 0.02313],
+            "max": [0.02198, 1.11612, 0.10149]
+          },
+          "triangles": 3000
+        },
+        "clavicle_r": {
+          "bbox": {
+            "min": [-0.15003, 1.33176, 0.04723],
+            "max": [-0.01147, 1.36686, 0.14677]
+          },
+          "triangles": 4000
+        },
+        "clavicle_l": {
+          "bbox": {
+            "min": [0.01014, 1.33179, 0.04723],
+            "max": [0.1487, 1.36684, 0.14674]
+          },
+          "triangles": 4000
+        }
+      },
+      "missing": []
+    },
+    "muscle_head.glb": {
+      "source": "BodyParts3D 3.0 obj_95 (DBCLS), CC BY-SA 2.1 JP",
+      "bytes": 951236,
+      "triangles": 146944,
+      "nodes": {
+        "platysma": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.13704, 1.34184, 0.05834],
+            "max": [0.13592, 1.47927, 0.17886]
+          },
+          "triangles": 7000
+        },
+        "digastric": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.05767, 1.43853, 0.07272],
+            "max": [0.05632, 1.5039, 0.16511]
+          },
+          "triangles": 7000
+        },
+        "mylohyoid": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.02686, 1.44037, 0.12876],
+            "max": [0.02553, 1.46472, 0.16539]
+          },
+          "triangles": 7000
+        },
+        "sternohyoid": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.02715, 1.33232, 0.11547],
+            "max": [0.02586, 1.43697, 0.13354]
+          },
+          "triangles": 7000
+        },
+        "omohyoid": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.10047, 1.33415, 0.04],
+            "max": [0.09914, 1.43728, 0.13051]
+          },
+          "triangles": 7000
+        },
+        "masseter": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.06135, 1.45117, 0.10699],
+            "max": [0.06003, 1.51572, 0.15275]
+          },
+          "triangles": 6998
+        },
+        "temporalis": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.07495, 1.48385, 0.04896],
+            "max": [0.07366, 1.59605, 0.15951]
+          },
+          "triangles": 6992
+        },
+        "medial_pterygoid": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.03637, 1.46526, 0.10868],
+            "max": [0.03508, 1.51299, 0.13849]
+          },
+          "triangles": 6992
+        },
+        "lateral_pterygoid": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.04231, 1.49275, 0.10544],
+            "max": [0.04103, 1.52067, 0.12923]
+          },
+          "triangles": 6998
+        },
+        "orbicularis_oculi": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.05218, 1.50467, 0.15162],
+            "max": [0.05095, 1.55275, 0.18204]
+          },
+          "triangles": 7000
+        },
+        "orbicularis_oris": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.03172, 1.44779, 0.16333],
+            "max": [0.03042, 1.49174, 0.19003]
+          },
+          "triangles": 7000
+        },
+        "zygomaticus_major": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.05433, 1.46289, 0.14663],
+            "max": [0.05301, 1.51571, 0.17152]
+          },
+          "triangles": 6974
+        },
+        "buccinator": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.03533, 1.45362, 0.13862],
+            "max": [0.03404, 1.48877, 0.16662]
+          },
+          "triangles": 7000
+        },
+        "mentalis": {
+          "kind": "muscle",
+          "bbox": {
+            "min": [-0.01462, 1.43748, 0.17086],
+            "max": [0.01331, 1.45166, 0.17767]
+          },
+          "triangles": 7000
+        },
+        "b_skull": {
+          "kind": "bone",
+          "bbox": {
+            "min": [-0.07263, 1.47559, -0.00206],
+            "max": [0.07135, 1.6382, 0.19503]
+          },
+          "triangles": 15990
+        },
+        "b_mandible": {
+          "kind": "bone",
+          "bbox": {
+            "min": [-0.05087, 1.43565, 0.09957],
+            "max": [0.04951, 1.5155, 0.17892]
+          },
+          "triangles": 6000
+        },
+        "b_teeth": {
+          "kind": "bone",
+          "bbox": {
+            "min": [-0.0316, 1.44107, 0.13432],
+            "max": [0.03031, 1.49511, 0.1881]
+          },
+          "triangles": 6000
+        },
+        "b_hyoid": {
+          "kind": "bone",
+          "bbox": {
+            "min": [-0.02161, 1.43104, 0.10081],
+            "max": [0.0203, 1.44995, 0.13566]
+          },
+          "triangles": 5000
+        },
+        "b_cervical": {
+          "kind": "bone",
+          "bbox": {
+            "min": [-0.04233, 1.37982, 0.02286],
+            "max": [0.04194, 1.49051, 0.10088]
+          },
+          "triangles": 8000
+        },
+        "b_shoulder": {
+          "kind": "bone",
+          "bbox": {
+            "min": [-0.16847, 1.16901, -0.01123],
+            "max": [0.16728, 1.38749, 0.20656]
+          },
+          "triangles": 8000
         }
       },
       "missing": []

@@ -135,7 +135,7 @@ export default function App() {
   useEffect(() => setTheme(blindOn ? 'blind' : 'normal'), [blindOn]);
   const mode = modeOf(cat, lang, kind, blindOn);
 
-  useEffect(() => preloadModels(cat === 'muscle' ? ['muscle_upper', 'muscle_lower', 'muscle_trunk'] : ['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot']), [cat]);
+  useEffect(() => preloadModels(cat === 'muscle' ? ['muscle_upper', 'muscle_lower', 'muscle_trunk', 'muscle_head'] : ['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot', 'skull', 'thorax']), [cat]);
 
   const start = async () => {
     const n = nick.trim().slice(0, 12);

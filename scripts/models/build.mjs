@@ -10,6 +10,7 @@
 //   - parts_list_e.txt            (FMA ID <TAB> 영어 이름)
 //   node build.mjs <...>/BodyParts3D_3.0_obj_95 <...>/parts_list_e.txt ../../public/models
 //   node verify.mjs ../../public/models <미리보기 PNG 폴더>   # 노드 이름·좌우 점검 + 렌더
+//   ONLY=skull,thorax node build.mjs <...>   # 일부 조립 파일만 다시 만들기 (manifest 의 다른 파일 항목은 그대로 둠)
 //
 // 4.0 판(99% 감축, 저해상도)도 읽을 수 있다 (단 미골 절단 높이 34 mm 는 3.0 기준으로 맞춘 값):
 //   https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html
@@ -44,6 +45,16 @@ const LONG = 10000; // 긴뼈·큰 뼈
 // 3.0 obj_95 의 sacrum 메시는 아래 끝에서 약 32~36 mm 높이가 가장 가는 목(천미관절)이라,
 // 아래 끝 + 34 mm 높이의 수평면에서 잘라 아래쪽을 coccyx 노드로 만들고 잘린 면은 막는다.
 const COCCYX_FROM_SACRUM = { splitFrom: 'sacrum', cutAboveBottom: 0.034 };
+
+const SKULL_BIG = 6000; // 머리뼈 큰 판
+const RIB = 2500; // 갈비뼈 하나
+const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth'];
+// 영구치 (사랑니 없음 — BodyParts3D 3.0 에 없음)
+const TEETH = (jaw) => ['right', 'left'].flatMap((side) => [
+  `${side} ${jaw} central secondary incisor tooth`, `${side} ${jaw} lateral secondary incisor tooth`, `${side} ${jaw} secondary canine tooth`,
+  `${side} ${jaw} first secondary premolar tooth`, `${side} ${jaw} second secondary premolar tooth`,
+  `${side} ${jaw} first secondary molar tooth`, `${side} ${jaw} second secondary molar tooth`,
+]);
 
 const ASSEMBLIES = {
   spine: [
@@ -123,6 +134,49 @@ const ASSEMBLIES = {
     ['tibia', 'right tibia', LONG],
     ['fibula', 'right fibula', LONG],
   ],
+  // 머리뼈: 좌우 짝인 뼈는 _r/_l 로 따로. 치아·위쪽 목뼈는 흐린 맥락용
+  skull: [
+    ['frontal', 'frontal bone', SKULL_BIG],
+    ['parietal_r', 'right parietal bone', SKULL_BIG],
+    ['parietal_l', 'left parietal bone', SKULL_BIG],
+    ['temporal_r', 'right temporal bone', SKULL_BIG],
+    ['temporal_l', 'left temporal bone', SKULL_BIG],
+    ['occipital', 'occipital bone', SKULL_BIG],
+    ['sphenoid', 'sphenoid bone', SKULL_BIG],
+    ['ethmoid', 'ethmoid', SMALL],
+    ['nasal_r', 'right nasal bone', SMALL],
+    ['nasal_l', 'left nasal bone', SMALL],
+    ['lacrimal_r', 'right lacrimal bone', SMALL],
+    ['lacrimal_l', 'left lacrimal bone', SMALL],
+    ['zygomatic_r', 'right zygomatic bone', SMALL],
+    ['zygomatic_l', 'left zygomatic bone', SMALL],
+    ['maxilla_r', 'right maxilla', SKULL_BIG],
+    ['maxilla_l', 'left maxilla', SKULL_BIG],
+    ['mandible', 'mandible', SKULL_BIG],
+    ['palatine_r', 'right palatine bone', SMALL],
+    ['palatine_l', 'left palatine bone', SMALL],
+    ['vomer', 'vomer', SMALL],
+    ['concha_r', 'right inferior nasal concha', SMALL],
+    ['concha_l', 'left inferior nasal concha', SMALL],
+    ['hyoid', 'hyoid bone', SMALL],
+    ['teeth_upper', TEETH('upper'), 6000],
+    ['teeth_lower', TEETH('lower'), 6000],
+    ['C1', 'atlas', 3000],
+    ['C2', 'axis', 3000],
+    ['C3', 'third cervical vertebra', 3000],
+    ['C4', 'fourth cervical vertebra', 3000],
+  ],
+  // 가슴우리: 갈비뼈 r1..r12 / l1..l12, 갈비연골 cc_r1..7 / cc_l1..7 (BodyParts3D 3.0 은 1~7번 연골만 따로 있음)
+  thorax: [
+    ['manubrium', 'manubrium', SMALL],
+    ['sternum_body', 'body of sternum', SMALL],
+    ['xiphoid', 'xiphoid process', SMALL],
+    ...ORD.flatMap((o, i) => [[`r${i + 1}`, `right ${o} rib`, RIB], [`l${i + 1}`, `left ${o} rib`, RIB]]),
+    ...ORD.slice(0, 7).flatMap((o, i) => [[`cc_r${i + 1}`, `right ${o} costal cartilage`, 1500], [`cc_l${i + 1}`, `left ${o} costal cartilage`, 1500]]),
+    ...ORD.map((o, i) => [`T${i + 1}`, `${o} thoracic vertebra`, 3000]),
+    ['clavicle_r', 'right clavicle', 4000],
+    ['clavicle_l', 'left clavicle', 4000],
+  ],
   foot: [
     ['talus', 'right talus', SMALL],
     ['calcaneus', 'right calcaneus', 5000],
@@ -191,8 +245,14 @@ function readObj(file) {
 }
 
 function loadBone(enName) {
-  const el = elements.get(enName);
-  if (!el) throw new Error(`BodyParts3D 에 없음: ${enName}`);
+  // 이름 여러 개면 한 노드로 합침 (치아 등)
+  const names = Array.isArray(enName) ? enName : [enName];
+  const els = names.map((n) => {
+    const el = elements.get(n);
+    if (!el) throw new Error(`BodyParts3D 에 없음: ${n}`);
+    return el;
+  });
+  const el = { fma: els.map((e) => e.fma).join(','), files: els.flatMap((e) => e.files) };
   const pos = [];
   const idx = [];
   for (const fj of el.files) {
@@ -315,9 +375,18 @@ const manifest = {
   ],
   files: {},
 };
+// 이미 있는 manifest 의 다른 파일 항목(근육 파일 등)과 설명은 그대로 둠
+const manifestPath = path.join(outDir, 'manifest.json');
+if (fs.existsSync(manifestPath)) {
+  const old = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  manifest.files = old.files || {};
+  manifest.remarks = [...new Set([...(old.remarks || []), ...manifest.remarks])];
+}
+const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
 const report = [];
 
 for (const [file, bones] of Object.entries(ASSEMBLIES)) {
+  if (ONLY && !ONLY.includes(file)) continue;
   const doc = new Document();
   doc.createBuffer();
   const scene = doc.createScene(file);
@@ -406,7 +475,7 @@ for (const [file, bones] of Object.entries(ASSEMBLIES)) {
 }
 
 const json = JSON.stringify(manifest, null, 2).replace(/\[\s+(-?[\d.e-]+),\s+(-?[\d.e-]+),\s+(-?[\d.e-]+)\s+\]/g, '[$1, $2, $3]');
-fs.writeFileSync(path.join(outDir, 'manifest.json'), json + '\n');
+fs.writeFileSync(manifestPath, json + '\n');
 console.log(report.join('\n'));
 const total = Object.values(manifest.files).reduce((s, f) => s + f.bytes, 0);
 console.log(`total ${(total / 1024 / 1024).toFixed(2)} MB`);

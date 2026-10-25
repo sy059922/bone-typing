@@ -28,7 +28,11 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { simplifyPrimitive, meshopt, prune, dedup } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
 
-const [objDir, elementList, outDir] = process.argv.slice(2);
+// --v3: BodyParts3D 3.0 obj_95 (뼈 파일과 같은 좌표·더 고운 메시)로 몸통·머리 근육 파일을 만든다.
+//   node build_muscles.mjs --v3 <BodyParts3D_3.0_obj_95 폴더> <parts_list_e.txt> <models 폴더>
+//   3.0 OBJ 머리말에는 이름이 없어 parts_list_e.txt (FMA id <TAB> 이름, 파일 = <id>.obj)로 뼈·근육을 모두 찾는다.
+const V3 = process.argv.includes('--v3');
+const [objDir, elementList, outDir] = process.argv.slice(2).filter((a) => a !== '--v3');
 if (!objDir || !elementList || !outDir) {
   console.error('usage: node build_muscles.mjs <isa objDir> <isa_element_parts.txt> <outDir>');
   process.exit(1);
@@ -166,35 +170,95 @@ const ASSEMBLIES = {
     B('b_fibula', ['right fibula']),
     B('b_foot', FOOT),
   ],
+};
+
+// 3.0 판 몸통·머리 근육 (좌우 둘 다 한 노드로)
+const LR = (n) => [`right ${n}`, `left ${n}`];
+const SKULL3 = [...SKULL.filter((b) => b !== 'mandible')];
+const TEETH = ['upper', 'lower'].flatMap((jaw) => ['right', 'left'].flatMap((side) => [
+  `${side} ${jaw} central secondary incisor tooth`, `${side} ${jaw} lateral secondary incisor tooth`, `${side} ${jaw} secondary canine tooth`,
+  `${side} ${jaw} first secondary premolar tooth`, `${side} ${jaw} second secondary premolar tooth`,
+  `${side} ${jaw} first secondary molar tooth`, `${side} ${jaw} second secondary molar tooth`,
+]));
+const THORAX3 = [...STERNUM, ...ribs('right'), ...ribs('left'), 'right clavicle', 'left clavicle'];
+const ASSEMBLIES_V3 = {
   muscle_trunk: [
-    M('sternocleidomastoid', 'right sternocleidomastoid'),
-    M('external_oblique', 'right external oblique'),
+    M('sternocleidomastoid', ...LR('sternocleidomastoid')),
+    M('external_oblique', ...LR('external oblique')),
+    M('internal_oblique', ...LR('internal oblique')),
+    M('transversus_abdominis', ...LR('transversus abdominis')),
+    M('rectus_abdominis', ...LR('rectus abdominis')),
+    M('quadratus_lumborum', ...LR('quadratus lumborum')),
+    M('latissimus_dorsi', ...LR('latissimus dorsi')),
+    M('erector_spinae', ...['iliocostalis lumborum', 'iliocostalis thoracis', 'iliocostalis cervicis', 'longissimus thoracis', 'longissimus cervicis',
+      'longissimus capitis', 'spinalis thoracis', 'spinalis cervicis'].flatMap(LR)),
+    M('multifidus', ...LR('multifidus')),
+    M('splenius_capitis', ...LR('splenius capitis')),
+    M('semispinalis_capitis', ...LR('semispinalis capitis')),
+    M('diaphragm', 'diaphragm'),
+    M('external_intercostal', 'external intercostal muscle'),
+    M('internal_intercostal', 'internal intercostal muscle'),
+    M('scalenes', ...['scalenus anterior', 'scalenus medius', 'scalenus posterior'].flatMap(LR)),
+    M('levator_ani', ...['pubococcygeus', 'puborectalis', 'iliococcygeus'].flatMap(LR)),
     B('b_skull', SKULL),
     B('b_cervical', CERVICAL),
-    B('b_thorax', [...STERNUM, ...ribs('right'), ...ribs('left'), 'right clavicle', 'left clavicle'], { note: 'sternum + both sides ribs/costal cartilages + both clavicles' }),
+    B('b_thorax', THORAX3, { note: 'sternum + both sides ribs/costal cartilages 1-7 + both clavicles' }),
+    B('b_spine_tl', [...THORACIC, ...LUMBAR]),
     B('b_pelvis', PELVIS, { note: 'both hip bones + sacrum (coccyx is part of the BodyParts3D sacrum mesh)' }),
+    B('b_arms', [...LR('scapula'), ...LR('humerus')]),
+  ],
+  muscle_head: [
+    M('platysma', ...LR('platysma')),
+    M('digastric', ...['anterior belly of', 'posterior belly of'].flatMap((b) => [`${b} right digastric`, `${b} left digastric`])),
+    M('mylohyoid', ...LR('mylohyoid')),
+    M('sternohyoid', ...LR('sternohyoid')),
+    M('omohyoid', ...LR('omohyoid')),
+    M('masseter', ...['superficial part of', 'deep part of'].flatMap((b) => [`${b} right masseter`, `${b} left masseter`])),
+    M('temporalis', ...LR('temporalis')),
+    M('medial_pterygoid', ...LR('medial pterygoid')),
+    M('lateral_pterygoid', ...['upper head of', 'lower head of'].flatMap((b) => [`${b} right lateral pterygoid`, `${b} left lateral pterygoid`])),
+    M('orbicularis_oculi', ...['orbital part of', 'palpebral part of'].flatMap((b) => [`${b} right orbicularis oculi`, `${b} left orbicularis oculi`])),
+    M('orbicularis_oris', 'orbicularis oris'),
+    M('zygomaticus_major', ...LR('zygomaticus major')),
+    M('buccinator', ...LR('buccinator')),
+    M('mentalis', ...LR('mentalis')),
+    B('b_skull', SKULL3, { note: 'skull without mandible' }),
+    B('b_mandible', ['mandible']),
+    B('b_teeth', TEETH),
+    B('b_hyoid', ['hyoid bone']),
+    B('b_cervical', CERVICAL),
+    B('b_shoulder', [...STERNUM, ...LR('clavicle'), ...LR('scapula'), 'right first rib', 'left first rib']),
   ],
 };
 
 // 근육 노드 삼각형 상한 / 세분화 기준 (파일=갈래 하나의 원본 삼각형 수)
-const MUSCLE_CAP = 9000; // 노드 하나의 최대 삼각형 수 (넘으면 단순화)
+const MUSCLE_CAP = V3 ? 7000 : 9000; // 노드 하나의 최대 삼각형 수 (넘으면 단순화)
 const SUBDIV2_BELOW = 1200; // 이보다 작으면 Loop 2단계 (x16)
 const SUBDIV1_BELOW = 4500; // 이보다 작으면 Loop 1단계 (x4)
 const MUSCLE_ERROR = 0.002; // 단순화 오차 한계 (메시 크기 대비)
-const BONE_CAP = { b_scapula: 6000, b_skull: 16000, b_thorax: 12000, b_spine_ct: 14000, b_cervical: 8000, b_pelvis: 10000, b_lumbar: 6000 };
+const BONE_CAP = { b_teeth: 6000, b_mandible: 6000, b_arms: 8000, b_spine_tl: 12000, b_shoulder: 8000, b_scapula: 6000, b_skull: 16000, b_thorax: 12000, b_spine_ct: 14000, b_cervical: 8000, b_pelvis: 10000, b_lumbar: 6000 };
 const BONE_CAP_DEFAULT = 5000;
 const BONE_ERROR = 0.01;
 
 // ---------------------------------------------------------------- 원본 색인
 const concepts = new Map(); // 개념 이름 -> {fma, files:Set}
 for (const line of fs.readFileSync(elementList, 'utf8').split(/\r?\n/).slice(1)) {
-  const [fma, name, fj] = line.split('\t').map((c) => c?.trim());
+  let [fma, name, fj] = line.split('\t').map((c) => c?.trim().replace(/^"|"$/g, ''));
+  if (V3) fj = fma; // 3.0: 파일 이름 = 개념 id
   if (!fma || !name || !fj) continue;
   if (!concepts.has(name)) concepts.set(name, { fma, files: new Set() });
   concepts.get(name).files.add(fj);
 }
 const headers = new Map(); // English name (소문자) -> [{fj, fma, name}]
-for (const f of fs.readdirSync(objDir)) {
+if (V3) {
+  for (const [name, e] of concepts) for (const fj of e.files) {
+    if (!fs.existsSync(path.join(objDir, `${fj}.obj`))) continue;
+    const k = name.toLowerCase();
+    if (!headers.has(k)) headers.set(k, []);
+    headers.get(k).push({ fj, fma: e.fma, name });
+  }
+}
+for (const f of V3 ? [] : fs.readdirSync(objDir)) {
   if (!f.endsWith('.obj')) continue;
   const fd = fs.openSync(path.join(objDir, f), 'r');
   const buf = Buffer.alloc(2048);
@@ -433,14 +497,15 @@ fs.mkdirSync(outDir, { recursive: true });
 const manifestPath = path.join(outDir, 'manifest.json');
 const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, 'utf8')) : { files: {} };
 const MUSCLE_REMARKS = [
-  'muscle_*.glb come from BodyParts3D 4.0 (isa_BP3D_4.0_obj_99), a different reconstruction from the 3.0 bones in spine/arm/hand/pelvis/leg/foot.glb: upper-limb bones sit ~10-17 mm lower, leg bones are longer (femur 466 vs 440 mm, tibia 380 vs 347 mm). Show muscles with the context bones inside the same muscle file (nodes "b_*", extras.kind = "bone"), not over the 3.0 bone files.',
+  'muscle_trunk.glb and muscle_head.glb come from BodyParts3D 3.0 (obj_95), the same reconstruction as the bone files; both sides of each muscle are merged into one node.',
+  'muscle_upper.glb and muscle_lower.glb come from BodyParts3D 4.0 (isa_BP3D_4.0_obj_99), a different reconstruction from the 3.0 bones in spine/arm/hand/pelvis/leg/foot.glb: upper-limb bones sit ~10-17 mm lower, leg bones are longer (femur 466 vs 440 mm, tibia 380 vs 347 mm). Show muscles with the context bones inside the same muscle file (nodes "b_*", extras.kind = "bone"), not over the 3.0 bone files.',
   'muscle_*.glb: muscle nodes have extras.kind = "muscle" and material "muscle"; branches/heads/parts of one muscle are merged into one node (extras.name_en lists them). Small muscles were Loop-subdivided for smooth shading (volume change <= 6%).',
 ];
-manifest.remarks = [...(manifest.remarks || []).filter((r) => !r.startsWith('muscle_*.glb')), ...MUSCLE_REMARKS];
+manifest.remarks = [...(manifest.remarks || []).filter((r) => !r.startsWith('muscle_')), ...MUSCLE_REMARKS];
 const report = [];
 const notFound = [];
 
-for (const [file, items] of Object.entries(ASSEMBLIES)) {
+for (const [file, items] of Object.entries(V3 ? ASSEMBLIES_V3 : ASSEMBLIES)) {
   const doc = new Document();
   doc.createBuffer();
   const scene = doc.createScene(file);
@@ -491,7 +556,7 @@ for (const [file, items] of Object.entries(ASSEMBLIES)) {
   const bytes = fs.statSync(outPath).size;
   const totalTris = Object.values(entry.nodes).reduce((s, n) => s + n.triangles, 0);
   manifest.files[`${file}.glb`] = {
-    source: 'BodyParts3D 4.0 isa_BP3D_4.0_obj_99 (DBCLS), CC BY-SA 2.1 JP',
+    source: V3 ? 'BodyParts3D 3.0 obj_95 (DBCLS), CC BY-SA 2.1 JP' : 'BodyParts3D 4.0 isa_BP3D_4.0_obj_99 (DBCLS), CC BY-SA 2.1 JP',
     bytes,
     triangles: totalTris,
     nodes: Object.fromEntries(Object.entries(entry.nodes).map(([k, v]) => [k, { kind: v.kind, bbox: v.bbox, triangles: v.triangles }])),

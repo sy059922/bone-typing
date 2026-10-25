@@ -1,9 +1,10 @@
 import type {Bone, ModelRef} from './bones';
 
-// 근육 모드 83개 — 옛 한자어 용어. 3D 는 muscle_*.glb 의 근육 노드(빨강) + b_* 맥락 뼈(흐리게)
+// 근육 모드 113개 — 옛 한자어 용어. 3D 는 muscle_*.glb 의 근육 노드(빨강) + b_* 맥락 뼈(흐리게)
+// 몸통·목·머리 근육(muscle_trunk · muscle_head)은 좌우 둘 다 보임
 // 문장은 신경 지배·작용 등 시험에 자주 나오는 사실 (사용자 사실 확인 대상)
 
-type M = Omit<Bone, 'region' | 'model'> & {region: 'shoulder' | 'arm' | 'forearm' | 'hand' | 'hip' | 'thigh' | 'leg' | 'foot' | 'trunk' | 'group'; model: ModelRef};
+type M = Omit<Bone, 'region' | 'model'> & {region: 'shoulder' | 'arm' | 'forearm' | 'hand' | 'hip' | 'thigh' | 'leg' | 'foot' | 'trunk' | 'neck' | 'head' | 'group'; model: ModelRef};
 
 const SH = ['b_clavicle', 'b_scapula', 'b_humerus'];
 const SH_T = [...SH, 'b_thorax'];
@@ -19,6 +20,14 @@ const FOOT = ['b_tibia', 'b_fibula', 'b_foot'];
 const up = (hl: string[], ctx: string[]): ModelRef => ({file: 'muscle_upper', hl, show: [...hl, ...ctx]});
 const lo = (hl: string[], ctx: string[]): ModelRef => ({file: 'muscle_lower', hl, show: [...hl, ...ctx]});
 const tr = (hl: string[], ctx: string[]): ModelRef => ({file: 'muscle_trunk', hl, show: [...hl, ...ctx]});
+const hd = (hl: string[], ctx: string[]): ModelRef => ({file: 'muscle_head', hl, show: [...hl, ...ctx]});
+const ABD = ['b_thorax', 'b_spine_tl', 'b_pelvis'];
+const BACK = ['b_skull', 'b_cervical', 'b_thorax', 'b_spine_tl', 'b_pelvis'];
+const NAPE = ['b_skull', 'b_cervical', 'b_thorax', 'b_spine_tl'];
+const CHEST = ['b_thorax', 'b_spine_tl'];
+const FACE = ['b_skull', 'b_mandible', 'b_teeth'];
+const JAW = ['b_skull', 'b_mandible', 'b_teeth', 'b_hyoid', 'b_cervical'];
+const NECK = ['b_skull', 'b_mandible', 'b_hyoid', 'b_cervical', 'b_shoulder'];
 const s = (ko: string, en: string) => ({ko, en});
 const HAND_T = {ko: '손', en: 'hand'};
 const FOOT_T = {ko: '발', en: 'foot'};
@@ -193,6 +202,66 @@ export const MUSCLES: M[] = [
     sentence: s('흉쇄유돌근이 짧아지면 사경이 생긴다.', 'A shortened sternocleidomastoid causes torticollis.')},
   {id: 'external_oblique', ko: '외복사근', en: 'External oblique', region: 'trunk', model: tr(['external_oblique'], ['b_thorax', 'b_pelvis']),
     sentence: s('외복사근은 복벽의 가장 바깥층 근육이다.', 'The external oblique is the outermost muscle of the abdominal wall.')},
+  {id: 'internal_oblique', ko: '내복사근', en: 'Internal oblique', region: 'trunk', model: tr(['internal_oblique'], ABD),
+    sentence: s('내복사근은 외복사근 아래에서 섬유가 반대 방향으로 달린다.', 'The internal oblique lies under the external oblique, with fibers running the opposite way.')},
+  {id: 'transversus_abdominis', ko: '복횡근', en: 'Transversus abdominis', region: 'trunk', model: tr(['transversus_abdominis'], ABD),
+    sentence: s('복횡근은 복벽의 가장 안쪽 근육으로, 몸통을 코르셋처럼 조인다.', 'The transversus abdominis is the deepest abdominal wall muscle and wraps the trunk like a corset.')},
+  {id: 'rectus_abdominis', ko: '복직근', en: 'Rectus abdominis', region: 'trunk', model: tr(['rectus_abdominis'], ABD),
+    sentence: s('복직근은 건획으로 나뉘어 이른바 식스팩을 만든다.', 'Tendinous intersections divide the rectus abdominis into the so-called six-pack.')},
+  {id: 'quadratus_lumborum', ko: '요방형근', en: 'Quadratus lumborum', region: 'trunk', model: tr(['quadratus_lumborum'], ABD),
+    sentence: s('요방형근은 제12늑골과 장골능 사이에 있으며 몸통을 옆으로 굽힌다.', 'The quadratus lumborum runs between the twelfth rib and the iliac crest and bends the trunk sideways.')},
+  {id: 'latissimus_dorsi', ko: '광배근', en: 'Latissimus dorsi', region: 'trunk', model: tr(['latissimus_dorsi'], [...ABD, 'b_arms']),
+    sentence: s('광배근은 흉배신경의 지배를 받으며 팔을 내전하고 내회전시킨다.', 'The latissimus dorsi, supplied by the thoracodorsal nerve, adducts and internally rotates the arm.')},
+  {id: 'erector_spinae', ko: '척추기립근', en: 'Erector spinae', region: 'trunk', model: tr(['erector_spinae'], BACK),
+    sentence: s('척추기립근은 장늑근, 최장근, 극근의 세 갈래로 이루어진다.', 'The erector spinae has three columns: the iliocostalis, longissimus, and spinalis.')},
+  {id: 'multifidus', ko: '다열근', en: 'Multifidus', region: 'trunk', model: tr(['multifidus'], BACK),
+    sentence: s('다열근은 요통 환자에서 위축되기 쉬운 깊은 등 근육이다.', 'The multifidus is a deep back muscle that often wastes away in people with low back pain.')},
+  {id: 'splenius_capitis', ko: '두판상근', en: 'Splenius capitis', region: 'trunk', model: tr(['splenius_capitis'], NAPE),
+    sentence: s('두판상근은 양쪽이 함께 수축하면 머리를 뒤로 젖힌다.', 'When both sides contract together, the splenius capitis extends the head.')},
+  {id: 'semispinalis_capitis', ko: '두반극근', en: 'Semispinalis capitis', region: 'trunk', model: tr(['semispinalis_capitis'], NAPE),
+    sentence: s('두반극근은 목덜미에서 가장 크고 두꺼운 근육이다.', 'The semispinalis capitis is the largest muscle in the back of the neck.')},
+  {id: 'diaphragm', ko: '횡격막', en: 'Diaphragm', region: 'trunk', model: tr(['diaphragm'], CHEST),
+    sentence: s('횡격막은 횡격신경의 지배를 받는 가장 중요한 들숨 근육이다.', 'The diaphragm, supplied by the phrenic nerve, is the main muscle of inspiration.')},
+  {id: 'external_intercostal', ko: '외늑간근', en: 'External intercostals', region: 'trunk', model: tr(['external_intercostal'], CHEST),
+    sentence: s('외늑간근은 늑골을 들어 올려 숨을 들이쉬게 돕는다.', 'The external intercostals lift the ribs to help you breathe in.')},
+  {id: 'internal_intercostal', ko: '내늑간근', en: 'Internal intercostals', region: 'trunk', model: tr(['internal_intercostal'], CHEST),
+    sentence: s('내늑간근은 늑골을 끌어내려 힘껏 숨을 내쉴 때 쓰인다.', 'The internal intercostals pull the ribs down during forced expiration.')},
+  {id: 'levator_ani', ko: '항문거근', en: 'Levator ani', region: 'trunk', model: tr(['levator_ani'], ['b_pelvis', 'b_spine_tl']),
+    sentence: s('항문거근은 골반저를 이루며 배변 조절을 돕는다.', 'The levator ani forms the pelvic floor and helps control defecation.')},
+
+  // ── 목
+  {id: 'scalenes', ko: '사각근', en: 'Scalenes', region: 'neck', model: tr(['scalenes'], ['b_skull', 'b_cervical', 'b_thorax']),
+    sentence: s('전사각근과 중사각근 사이로 상완신경총이 지나간다.', 'The brachial plexus passes between the anterior and middle scalenes.')},
+  {id: 'platysma', ko: '광경근', en: 'Platysma', region: 'neck', model: hd(['platysma'], NECK),
+    sentence: s('광경근은 피부 바로 아래에 있는 얇고 넓은 목 근육이다.', 'The platysma is a thin, broad neck muscle just under the skin.')},
+  {id: 'digastric', ko: '이복근', en: 'Digastric', region: 'neck', model: hd(['digastric'], JAW),
+    sentence: s('이복근은 전복과 후복이 중간건으로 이어진다.', 'The digastric has anterior and posterior bellies joined by an intermediate tendon.')},
+  {id: 'mylohyoid', ko: '악설골근', en: 'Mylohyoid', region: 'neck', model: hd(['mylohyoid'], JAW),
+    sentence: s('악설골근은 구강저를 이루는 근육이다.', 'The mylohyoid forms the floor of the mouth.')},
+  {id: 'sternohyoid', ko: '흉골설골근', en: 'Sternohyoid', region: 'neck', model: hd(['sternohyoid'], NECK),
+    sentence: s('흉골설골근은 음식을 삼킨 뒤 설골을 끌어내린다.', 'The sternohyoid pulls the hyoid down after swallowing.')},
+  {id: 'omohyoid', ko: '견갑설골근', en: 'Omohyoid', region: 'neck', model: hd(['omohyoid'], NECK),
+    sentence: s('견갑설골근은 상복과 하복이 중간건으로 이어진다.', 'The omohyoid has superior and inferior bellies joined by an intermediate tendon.')},
+
+  // ── 머리
+  {id: 'masseter', ko: '교근', en: 'Masseter', region: 'head', model: hd(['masseter'], FACE),
+    sentence: s('교근은 삼차신경의 지배를 받으며 이를 꽉 물게 한다.', 'The masseter, supplied by the trigeminal nerve, clenches the teeth.')},
+  {id: 'temporalis', ko: '측두근', en: 'Temporalis', region: 'head', model: hd(['temporalis'], FACE),
+    sentence: s('측두근은 하악골의 근돌기에 붙어 입을 다물게 한다.', 'The temporalis attaches to the coronoid process of the mandible and closes the mouth.')},
+  {id: 'medial_pterygoid', ko: '내측익돌근', en: 'Medial pterygoid', region: 'head', model: hd(['medial_pterygoid'], FACE),
+    sentence: s('내측익돌근은 교근과 함께 하악골을 들어 올린다.', 'The medial pterygoid works with the masseter to raise the mandible.')},
+  {id: 'lateral_pterygoid', ko: '외측익돌근', en: 'Lateral pterygoid', region: 'head', model: hd(['lateral_pterygoid'], FACE),
+    sentence: s('외측익돌근은 저작근 가운데 유일하게 입을 벌린다.', 'The lateral pterygoid is the only chewing muscle that opens the mouth.')},
+  {id: 'orbicularis_oculi', ko: '안륜근', en: 'Orbicularis oculi', region: 'head', model: hd(['orbicularis_oculi'], FACE),
+    sentence: s('안륜근은 안면신경의 지배를 받으며 눈을 감게 한다.', 'The orbicularis oculi, supplied by the facial nerve, closes the eye.')},
+  {id: 'orbicularis_oris', ko: '구륜근', en: 'Orbicularis oris', region: 'head', model: hd(['orbicularis_oris'], FACE),
+    sentence: s('구륜근은 입술을 오므려 휘파람을 불게 한다.', 'The orbicularis oris purses the lips to whistle.')},
+  {id: 'zygomaticus_major', ko: '대관골근', en: 'Zygomaticus major', region: 'head', model: hd(['zygomaticus_major'], FACE),
+    sentence: s('대관골근은 입꼬리를 위로 당겨 웃게 한다.', 'The zygomaticus major pulls the corners of the mouth up into a smile.')},
+  {id: 'buccinator', ko: '협근', en: 'Buccinator', region: 'head', model: hd(['buccinator'], FACE),
+    sentence: s('협근은 볼을 치아에 붙여 음식이 볼 쪽으로 새지 않게 한다.', 'The buccinator holds the cheek against the teeth so food does not slip into the cheek.')},
+  {id: 'mentalis', ko: '이근', en: 'Mentalis', region: 'head', model: hd(['mentalis'], FACE),
+    sentence: s('이근은 턱끝 피부를 올려 아랫입술을 내밀게 한다.', 'The mentalis raises the skin of the chin and pushes out the lower lip.')},
 
   // ── 묶음 이름
   {id: 'rotator_cuff', ko: '회전근개', en: 'Rotator cuff', region: 'group', model: up(['supraspinatus', 'infraspinatus', 'teres_minor', 'subscapularis'], SH),
@@ -207,4 +276,8 @@ export const MUSCLES: M[] = [
     sentence: s('하퇴삼두근은 아킬레스건으로 종골에 붙는다.', 'The triceps surae attaches to the calcaneus through the Achilles tendon.')},
   {id: 'iliopsoas', ko: '장요근', en: 'Iliopsoas', region: 'group', model: lo(['psoas_major', 'iliacus'], HIP),
     sentence: s('장요근은 가장 강한 고관절 굴곡근이다.', 'The iliopsoas is the strongest flexor of the hip.')},
+  {id: 'abdominals', ko: '복근', en: 'Abdominal muscles', region: 'group', model: tr(['rectus_abdominis', 'external_oblique', 'internal_oblique', 'transversus_abdominis'], ABD),
+    sentence: s('복근은 복직근, 외복사근, 내복사근, 복횡근으로 이루어진다.', 'The abdominal muscles are the rectus abdominis, external oblique, internal oblique, and transversus abdominis.')},
+  {id: 'masticatory', ko: '저작근', en: 'Muscles of mastication', region: 'group', model: hd(['masseter', 'temporalis', 'medial_pterygoid', 'lateral_pterygoid'], FACE),
+    sentence: s('저작근은 교근, 측두근, 내측익돌근, 외측익돌근의 네 근육이다.', 'The muscles of mastication are the masseter, temporalis, medial pterygoid, and lateral pterygoid.')},
 ];
