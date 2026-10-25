@@ -16,6 +16,7 @@ os.makedirs(OUT, exist_ok=True)
 
 # 2026-10-25 사용자 피드백(구분이 안 됨) 뒤로 한 단계 굵게
 BIG, MID, SMALL, CN, CN_S = 0.005, 0.0034, 0.0024, 0.0024, 0.0017
+PLEXUS = 0.0019  # 상완신경총 뿌리·줄기·다발: 원본 배율이 3배라 기본 굵기를 줄임 (사용자: 너무 두꺼움)
 
 def R(*names):  # 오른쪽 (.r) — 이름 끝에 접미사가 없는 것도 찾음
     return [n + '.r' for n in names]
@@ -24,11 +25,11 @@ def LR(*names):
 
 NERVES = {
     'nerve_upper': {
-        'n_roots': (R('Roots of brachial plexus'), MID),
-        'n_sup_trunk': (R('Superior trunk of brachial plexus', 'Anterior division of superior trunk of brachial plexus', 'Posterior division of superior trunk of brachial plexus'), MID),
-        'n_mid_trunk': (R('Middle trunk of brachial plexus', 'Anterior division of middle trunk of brachial plexus', 'Posterior division of middle trunk of brachial plexus'), MID),
-        'n_inf_trunk': (R('Inferior trunk of brachial plexus', 'Anterior division of inferior trunk of brachial plexus', 'Posterior division of inferior trunk of brachial plexus'), MID),
-        'n_post_cord': (R('Posterior cord of brachial plexus'), MID),
+        'n_roots': (R('Roots of brachial plexus'), PLEXUS),
+        'n_sup_trunk': (R('Superior trunk of brachial plexus', 'Anterior division of superior trunk of brachial plexus', 'Posterior division of superior trunk of brachial plexus'), PLEXUS),
+        'n_mid_trunk': (R('Middle trunk of brachial plexus', 'Anterior division of middle trunk of brachial plexus', 'Posterior division of middle trunk of brachial plexus'), PLEXUS),
+        'n_inf_trunk': (R('Inferior trunk of brachial plexus', 'Anterior division of inferior trunk of brachial plexus', 'Posterior division of inferior trunk of brachial plexus'), PLEXUS),
+        'n_post_cord': (R('Posterior cord of brachial plexus'), PLEXUS),
         'n_dorsal_scapular': (R('Dorsal scapular nerve'), SMALL),
         'n_long_thoracic': (R('Long thoracic nerve'), SMALL),
         'n_suprascapular': (R('Suprascapular nerve'), SMALL),
