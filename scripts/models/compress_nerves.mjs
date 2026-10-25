@@ -11,7 +11,7 @@ const [inDir, outDir] = process.argv.slice(2);
 await MeshoptEncoder.ready;
 await MeshoptSimplifier.ready;
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder });
-const NERVE_CAP = 5000; // 신경 노드 하나 최대 삼각형
+const NERVE_CAP = 9000; // 신경 노드 하나 최대 삼각형
 const BONE_CAP = { b_skull: 16000, b_teeth: 5000, b_ribs: 14000, b_spine: 14000, b_arm: 12000, b_leg: 12000, b_pelvis: 8000, b_axial: 8000 };
 const manifestPath = path.join(outDir, 'manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -30,7 +30,7 @@ for (const f of fs.readdirSync(inDir).filter((x) => /^nerve_.*\.glb$/.test(x))) 
     const cap = name.startsWith('b_') ? BONE_CAP[name] ?? 6000 : name.startsWith('m_') ? 5000 : NERVE_CAP;
     for (const prim of mesh.listPrimitives()) {
       const before = prim.getIndices().getCount() / 3;
-      if (before > cap) simplifyPrimitive(prim, { simplifier: MeshoptSimplifier, ratio: cap / before, error: name.startsWith('n_') ? 0.003 : 0.01 });
+      if (before > cap) simplifyPrimitive(prim, { simplifier: MeshoptSimplifier, ratio: cap / before, error: name.startsWith('n_') ? 0.0015 : 0.01 });
     }
     const p = mesh.listPrimitives()[0];
     const pos = p.getAttribute('POSITION');

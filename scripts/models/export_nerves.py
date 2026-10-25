@@ -62,7 +62,7 @@ NERVES = {
         'n_saphenous': (R('Saphenous nerve', 'Infrapatellar branch of saphenous nerve', 'Medial crural cutaneous branches of saphenous nerve'), MID),
         'n_obturator': (R('Obturator nerve', 'Anterior branch of obturator nerve', 'Posterior branch of obturator nerve'), MID),
         'n_sup_gluteal': (R('Superior gluteal nerve'), MID),
-        'n_sciatic': (R('Sciatic nerve'), 0.0021),  # 원본 곡선 자체가 굵게 잡혀 있어 반지름을 줄임
+        'n_sciatic': (R('Sciatic nerve'), 0.0034),
         'n_pfcn': (R('Posterior femoral cutaneous nerve', 'Anterior root of posterior femoral cutaneous nerve', 'Posterior root of posterior femoral cutaneous nerve'), MID),
         'n_pudendal': (R('Pudendal nerve'), MID),
         'n_tibial': (R('Tibial nerve'), BIG),
@@ -231,15 +231,21 @@ report = []
 def to_mesh(src, radius):
     """원본 개체 → 세계 좌표가 적용된 새 메시 데이터"""
     if src.type == 'CURVE':
+        # 원본 곡선의 지점별 굵기 배율(좌골신경 최대 12배, 후각망울 5배 …)이 덩어리를 만들어 0.6~1.6 배로 묶음
+        for sp in src.data.splines:
+            for pt in (sp.bezier_points if sp.type == 'BEZIER' else sp.points):
+                pt.radius = min(1.6, max(0.6, pt.radius))
         src.data.bevel_mode = 'ROUND'
         src.data.bevel_depth = radius
-        src.data.bevel_resolution = 2
+        src.data.bevel_resolution = 4
         src.data.use_fill_caps = True
         src.data.bevel_object = None
         deps.update()
     ev = src.evaluated_get(bpy.context.evaluated_depsgraph_get())
     me = bpy.data.meshes.new_from_object(ev)
     me.transform(src.matrix_world)
+    if src.type == 'CURVE':
+        me.shade_smooth()
     return me
 
 

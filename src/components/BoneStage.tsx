@@ -164,6 +164,12 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
         const all = box.clone();
         group.children.forEach((c) => c.userData.ctx && all.expandByObject(c));
         frame = Math.max(hlSpan * 1.2, Math.min(span(all) * 1.05, hlSpan * 2.4));
+        // 머리의 작은 뇌신경은 너무 바짝 다가가지 않게 — 머리뼈의 60% 이상은 보이게
+        if (model.file === 'nerve_head') {
+          const skull = new THREE.Box3();
+          group.children.forEach((c) => !c.userData.hl && !c.userData.ctx && skull.expandByObject(c));
+          frame = Math.max(frame, span(skull) * 0.6);
+        }
       } else if (isMuscle) frame = hlSpan * 1.36;
       else {
         // 폰: 작은 뼈(슬개골·족근골·두상골)도 주변 뼈가 보이게 — 뼈 크기의 3배 또는 전체의 60% 중 큰 쪽, 너무 멀어지진 않게
