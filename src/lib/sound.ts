@@ -341,8 +341,24 @@ export function setPref(k: 'bgm' | 'sfx', on: boolean) {
   bus.gain.setTargetAtTime(on ? (k === 'bgm' ? BGM_VOL : SFX_VOL) : 0, ctx.currentTime, 0.05);
 }
 
+// 영상용 소리 트랙 (개발용): 배경음 + 정해진 시각의 효과음 → WAV(base64)
+export type TrackEvent = {t: number; k: 'key' | 'back' | 'bad' | 'word' | 'pass' | 'finish'; p?: number; combo?: number};
+export async function renderTrack(seconds: number, th: Theme, events: TrackEvent[], bgmFrom = 0): Promise<string> {
+  return renderDemo(seconds, th, false, (startBgmAt) => {
+    void startBgmAt;
+    for (const e of events) {
+      if (e.k === 'key') sfxKey(e.p ?? 0, e.t);
+      else if (e.k === 'back') sfxBackspace(e.t);
+      else if (e.k === 'bad') sfxBad(e.t);
+      else if (e.k === 'word') sfxWord(e.combo ?? 1, e.t);
+      else if (e.k === 'pass') sfxPass(e.t);
+      else sfxFinish(e.t);
+    }
+  }, bgmFrom);
+}
+
 // 미리듣기 WAV 만들기 (개발용 — ?demo 페이지에서 호출): 배경음 위에 실제 게임처럼 타자·오타·성공·팡파르
-export async function renderDemo(seconds = 20, th: Theme = 'normal', withSfx = true): Promise<string> {
+export async function renderDemo(seconds = 20, th: Theme = 'normal', withSfx = true, extra?: (t0: number) => void, bgmFrom = 0): Promise<string> {
   const SR = 44100;
   const off = new OfflineAudioContext(2, SR * seconds, SR);
   const saved = ctx;
@@ -367,7 +383,8 @@ export async function renderDemo(seconds = 20, th: Theme = 'normal', withSfx = t
   const on = {...prefs};
   prefs.bgm = prefs.sfx = true;
   const sg = SONGS[th];
-  for (let i = 0, t = 0.05; t < seconds - 0.2; i++, t += sg.step) sg.play(i, t);
+  for (let i = 0, t = 0.05 + bgmFrom; t < seconds - 0.2; i++, t += sg.step) sg.play(i, t);
+  extra?.(bgmFrom);
   // 2초부터: 낱말마다 6타 + 확정, 세 번째 낱말에서 오타 하나
   let t = 2;
   for (let w = 0; w < (withSfx ? 9 : 0); w++) {

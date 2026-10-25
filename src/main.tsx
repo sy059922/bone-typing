@@ -3,10 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import {Analytics} from '@vercel/analytics/react'
-import {renderDemo} from './lib/sound'
+import {renderDemo, renderTrack} from './lib/sound'
 
 // 개발용: 소리 미리듣기 WAV 생성기
-if (import.meta.env.DEV) (window as unknown as {renderDemo: typeof renderDemo}).renderDemo = renderDemo
+if (import.meta.env.DEV) Object.assign(window, {renderDemo, renderTrack})
 
 // 화면 키보드가 올라오면 보이는 높이만큼만 쓰게 (--app-h). 아이폰은 레이아웃 높이가 안 줄어서 직접 맞춤
 const vv = window.visualViewport;
