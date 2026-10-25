@@ -1,5 +1,6 @@
 // 도트 게임 느낌 소리 — 파일 없이 Web Audio 로 그 자리에서 합성 (곡·효과음 모두 이 프로젝트용 창작, 저작권 걱정 없음)
 // 배경음: 132BPM 칩튠 루프 (펄스파 멜로디 · 삼각파 베이스 · 노이즈 드럼), Am–F–C–G
+// 학습 모드 곡: 76BPM 로파이 (Fmaj7–Em7–Dm7–Cmaj7, 부드러운 패드 · 전자 피아노 · 스윙 하이햇 · 레코드 잡음) — 집중용으로 멜로디는 아주 드물게
 // 효과음: 키 타격(펄스 블립 + 노이즈 클릭 + 저음 쿵), 오타(내려가는 버즈), 낱말 성공(올라가는 아르페지오), 결과 팡파르
 
 let ctx: BaseAudioContext | null = null;
@@ -245,9 +246,62 @@ const scheduleBlind = (s: number, t: number) => {
   for (const [st, m] of STAB_B) if (st === s % 64) tone({wave: 'p25', f0: midi(m), t, dur: STEP_B * 1.6, vol: 0.119, bus: bgmBus, attack: 0.002});
 };
 
-type Theme = 'normal' | 'blind';
+// ── 학습 모드 곡: 76BPM 로파이, 8마디 루프 (진행 두 번 — 뒤 네 마디만 종소리 멜로디)
+const BPM_S = 76;
+const STEP_S = 60 / BPM_S / 4;
+const CHORDS_S = [
+  [53, 57, 60, 64], // Fmaj7
+  [52, 55, 59, 62], // Em7
+  [50, 53, 57, 60], // Dm7
+  [48, 52, 55, 59], // Cmaj7
+];
+// 종소리 멜로디 [스텝(8마디 128 중), MIDI, 길이(스텝)] — 뒤 네 마디(64~127)에만, 띄엄띄엄
+const BELL_S: [number, number, number][] = [
+  [66, 76, 6], [74, 72, 4], [82, 74, 8], [98, 72, 4], [102, 69, 6], [114, 67, 4], [118, 71, 8],
+];
+// 전자 피아노: 한 화음을 부드럽게 (기음 + 한 옥타브 위 배음 조금)
+const keys = (m: number, t: number, dur: number, vol: number) => {
+  tone({wave: 'sine', f0: midi(m), t, dur, vol, bus: bgmBus, attack: 0.012});
+  tone({wave: 'sine', f0: midi(m + 12), t, dur: dur * 0.45, vol: vol * 0.18, bus: bgmBus, attack: 0.008});
+};
+const scheduleStudy = (s: number, t: number) => {
+  const inBar = s % 16;
+  const bar = Math.floor((s % 64) / 16);
+  const ch = CHORDS_S[bar];
+  const barLen = STEP_S * 16;
+  // 스윙: 엇박 16분음표를 살짝 늦게
+  const sw = inBar % 2 ? STEP_S * 0.28 : 0;
+  // 패드 (마디 처음, 천천히 커졌다 사라짐)
+  if (inBar === 0) for (const m of ch) tone({wave: 'tri', f0: midi(m), t, dur: barLen * 1.05, vol: 0.05, bus: bgmBus, attack: 0.6});
+  // 전자 피아노 반주: 1박 · 2박 엇박 · 4박 (화음 위쪽 세 음)
+  if (inBar === 0 || inBar === 6 || inBar === 12) {
+    const v = inBar === 0 ? 0.11 : 0.075;
+    ch.slice(1).forEach((m, i) => keys(m + 12, t + sw + i * 0.012, inBar === 0 ? 1.6 : 0.9, v));
+  }
+  // 베이스: 근음 (1박, 3박 앞 엇박)
+  if (inBar === 0) tone({wave: 'sine', f0: midi(ch[0] - 12), t, dur: STEP_S * 7, vol: 0.42, bus: bgmBus, attack: 0.01});
+  if (inBar === 10) tone({wave: 'sine', f0: midi(ch[0] - 12 + (bar % 2 ? 7 : 0)), t: t + sw, dur: STEP_S * 5, vol: 0.32, bus: bgmBus, attack: 0.01});
+  // 드럼: 작은 킥 (1박 · 3박 앞) · 부드러운 스네어 (2 · 4박) · 아주 작은 스윙 하이햇
+  if (inBar === 0 || inBar === 10) tone({wave: 'sine', f0: 105, f1: 42, t: t + sw, dur: 0.22, vol: 0.5, bus: bgmBus});
+  if (inBar === 4 || inBar === 12) hiss(t, 0.16, 0.13, bgmBus, 'bandpass', 1100);
+  if (inBar % 2 === 0) hiss(t + sw, 0.03, inBar % 4 === 2 ? 0.06 : 0.035, bgmBus, 'highpass', 7500);
+  // 레코드판 잡음: 가끔 '틱'
+  if (Math.random() < 0.22) hiss(t + Math.random() * STEP_S, 0.012, 0.03 + Math.random() * 0.03, bgmBus, 'highpass', 2500);
+  // 종소리 멜로디 (뒤 네 마디만)
+  for (const [st, m, len] of BELL_S) if (st === s % 128) {
+    tone({wave: 'sine', f0: midi(m), t: t + sw, dur: STEP_S * len, vol: 0.075, bus: bgmBus, attack: 0.005});
+    tone({wave: 'sine', f0: midi(m + 19), t: t + sw, dur: STEP_S * len * 0.3, vol: 0.012, bus: bgmBus, attack: 0.003});
+  }
+};
+
+type Theme = 'normal' | 'blind' | 'study';
 let theme: Theme = 'normal';
-const song = () => (theme === 'blind' ? {step: STEP_B, play: scheduleBlind} : {step: STEP, play: scheduleStep});
+const SONGS: Record<Theme, {step: number; play: (s: number, t: number) => void}> = {
+  normal: {step: STEP, play: scheduleStep},
+  blind: {step: STEP_B, play: scheduleBlind},
+  study: {step: STEP_S, play: scheduleStudy},
+};
+const song = () => SONGS[theme];
 
 // 곡 바꾸기 (블라인드 모드 켜고 끌 때). 재생 중이면 바로 갈아탐
 export function setTheme(th: Theme) {
@@ -288,7 +342,7 @@ export function setPref(k: 'bgm' | 'sfx', on: boolean) {
 }
 
 // 미리듣기 WAV 만들기 (개발용 — ?demo 페이지에서 호출): 배경음 위에 실제 게임처럼 타자·오타·성공·팡파르
-export async function renderDemo(seconds = 20, th: Theme = 'normal'): Promise<string> {
+export async function renderDemo(seconds = 20, th: Theme = 'normal', withSfx = true): Promise<string> {
   const SR = 44100;
   const off = new OfflineAudioContext(2, SR * seconds, SR);
   const saved = ctx;
@@ -312,11 +366,11 @@ export async function renderDemo(seconds = 20, th: Theme = 'normal'): Promise<st
   pulse['50'] = pulseWave(off as BaseAudioContext, 0.5);
   const on = {...prefs};
   prefs.bgm = prefs.sfx = true;
-  const sg = th === 'blind' ? {step: STEP_B, play: scheduleBlind} : {step: STEP, play: scheduleStep};
+  const sg = SONGS[th];
   for (let i = 0, t = 0.05; t < seconds - 0.2; i++, t += sg.step) sg.play(i, t);
   // 2초부터: 낱말마다 6타 + 확정, 세 번째 낱말에서 오타 하나
   let t = 2;
-  for (let w = 0; w < 9; w++) {
+  for (let w = 0; w < (withSfx ? 9 : 0); w++) {
     for (let k = 0; k < 6; k++) {
       sfxKey(w / 10, t);
       t += 0.11;
@@ -331,7 +385,7 @@ export async function renderDemo(seconds = 20, th: Theme = 'normal'): Promise<st
     sfxWord(w === 2 ? 0 : w + 1, t + 0.02);
     t += 0.55;
   }
-  sfxFinish(t + 0.3);
+  if (withSfx) sfxFinish(t + 0.3);
   Object.assign(prefs, on);
   const buf = await off.startRendering();
   ctx = saved;

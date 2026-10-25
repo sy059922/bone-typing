@@ -151,6 +151,8 @@ export default function App() {
   }, []);
   // 블라인드는 낱말 연습에서만 (문장은 외워 칠 수 없음) — 켜 둔 설정은 낱말로 돌아오면 다시 적용
   const blindOn = blind && kind === 'word' && !study;
+  // 곡: 학습 모드 = 로파이, 블라인드 = 살벌한 곡, 그 밖 = 칩튠
+  useEffect(() => setTheme(study ? 'study' : blindOn ? 'blind' : 'normal'), [study, blindOn]);
   const fullPool = cat === 'muscle' ? MUSCLES : BONES;
   const studyPool = fullPool.filter((b) => parts[cat].includes(partOf(b, cat)));
   const studyId = studyKey(cat, lang, term, parts[cat]);
@@ -161,7 +163,7 @@ export default function App() {
       const next = cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p];
       return next.length ? {...all, [cat]: next} : all; // 하나는 남김
     });
-  useEffect(() => setTheme(blindOn ? 'blind' : 'normal'), [blindOn]);
+
   const mode = modeOf(cat, lang, kind, blindOn);
 
   useEffect(() => preloadModels(cat === 'muscle' ? ['muscle_upper', 'muscle_lower', 'muscle_trunk', 'muscle_head'] : ['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot', 'skull', 'thorax']), [cat]);
