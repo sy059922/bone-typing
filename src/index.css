@@ -924,6 +924,10 @@ button {
   background: var(--sub);
   transition: transform 0.2s, background 0.2s;
 }
+.blind-toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .blind-toggle.on {
   border-color: var(--bad);
   color: var(--text);

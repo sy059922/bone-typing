@@ -50,6 +50,7 @@ const D = {
   caseNote: ['Aa 대소문자 구분 없이 쳐도 돼요', 'Aa Letter case doesn’t matter'],
   blind: ['블라인드 모드', 'Blind mode'],
   blindSub: ['정답 글씨 숨기기 · 틀린 문제만 보여 줌', 'Hide the answer · shown only after a mistake'],
+  blindWordOnly: ['낱말 연습에서만 할 수 있어요', 'Available in Words only'],
   nickPh: ['닉네임 (12자까지)', 'Nickname (up to 12)'],
   start: ['시작하기', 'Start'],
   checking: ['닉네임 확인 중…', 'Checking nickname…'],

@@ -90,14 +90,12 @@ export default function App() {
   });
   const setBlind = (on: boolean) => {
     setBlindState(on);
-    setTheme(on ? 'blind' : 'normal');
     try {
       localStorage.setItem('bone-typing:blind', on ? '1' : '0');
     } catch {
       /* 무시 */
     }
   };
-  useEffect(() => setTheme(blind ? 'blind' : 'normal'), [blind]);
   const [lang, setLang] = useState<Lang>(() => (ui === 'en' ? 'en' : 'ko'));
   const [kind, setKind] = useState<Kind>('word');
   const [nick, setNick] = useState(readNick);
@@ -132,7 +130,10 @@ export default function App() {
       setBlindState(m.blind);
     });
   }, []);
-  const mode = modeOf(cat, lang, kind, blind);
+  // 블라인드는 낱말 연습에서만 (문장은 외워 칠 수 없음) — 켜 둔 설정은 낱말로 돌아오면 다시 적용
+  const blindOn = blind && kind === 'word';
+  useEffect(() => setTheme(blindOn ? 'blind' : 'normal'), [blindOn]);
+  const mode = modeOf(cat, lang, kind, blindOn);
 
   useEffect(() => preloadModels(cat === 'muscle' ? ['muscle_upper', 'muscle_lower', 'muscle_trunk'] : ['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot']), [cat]);
 
@@ -285,7 +286,7 @@ export default function App() {
   if (screen === 'game')
     return (
       <>
-        <Game key={round} cat={cat} pool={cat === 'muscle' ? MUSCLES : BONES} lang={lang} kind={kind} term={term} blind={blind} order={roundInfo?.items} onFirstKey={() => roundInfo && beginRound(roundInfo.round)} onDone={done} onQuit={() => setScreen('title')} />
+        <Game key={round} cat={cat} pool={cat === 'muscle' ? MUSCLES : BONES} lang={lang} kind={kind} term={term} blind={blindOn} order={roundInfo?.items} onFirstKey={() => roundInfo && beginRound(roundInfo.round)} onDone={done} onQuit={() => setScreen('title')} />
         {result ? (
           <ResultModal
             result={result}
@@ -378,11 +379,11 @@ export default function App() {
                 {t('sentence')}
               </button>
             </div>
-            <button className={`blind-toggle ${blind ? 'on' : ''}`} onClick={() => setBlind(!blind)} role="switch" aria-checked={blind}>
+            <button className={`blind-toggle ${blindOn ? 'on' : ''}`} onClick={() => setBlind(!blind)} role="switch" aria-checked={blindOn} disabled={kind !== 'word'}>
               <span className="blind-knob" />
               <span className="blind-text">
                 <b>{t('blind')}</b>
-                <small>{t('blindSub')}</small>
+                <small>{kind === 'word' ? t('blindSub') : t('blindWordOnly')}</small>
               </span>
             </button>
             <input
