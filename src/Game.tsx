@@ -222,6 +222,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     setCombo(0);
     flashBad();
     sfxBad();
+    setRevealed(true);
     setPassing(true);
     keySinceSubmit.current = false;
     submittedAt.current = performance.now();
@@ -342,6 +343,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
         </button>
         {study ? (
           <div className="hud-stats study">
+            {blind ? <span className={`blind-badge ${revealed ? 'peek' : ''}`}>{revealed ? t('peek') : 'BLIND'}</span> : null}
             <span className="stopwatch">
               <b>{formatTime(s.start ? (s.end || performance.now()) - s.start : 0)}</b>
             </span>

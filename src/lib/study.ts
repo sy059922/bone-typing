@@ -56,8 +56,8 @@ export const formatTime = (ms: number) => {
 
 // 이 기기 최고 기록 (같은 분류 · 언어 · 용어 · 영역 조합끼리)
 const BEST = 'bone-typing:study-best';
-export const studyKey = (cat: Category, lang: Lang, term: string, parts: Part[]) =>
-  `${cat}|${lang}|${lang === 'ko' ? term : '-'}|${[...parts].sort().join(',')}`;
+export const studyKey = (cat: Category, lang: Lang, term: string, parts: Part[], blind = false) =>
+  `${cat}|${lang}|${lang === 'ko' ? term : '-'}|${[...parts].sort().join(',')}${blind ? '|blind' : ''}`;
 const readBest = (): Record<string, number> => {
   try {
     return JSON.parse(localStorage.getItem(BEST) || '{}');

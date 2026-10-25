@@ -1131,7 +1131,8 @@ html.in-game body {
 .parts button {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+  white-space: nowrap;
   border: 1px solid var(--line2);
   background: transparent;
   color: var(--sub);
@@ -1226,5 +1227,10 @@ html.in-game body {
   }
   .hud-stats.study {
     gap: 14px;
+  }
+}
+@media (max-width: 640px), (pointer: coarse) and (max-width: 1024px) {
+  .title-panel.study > .blind-toggle {
+    order: 3;
   }
 }

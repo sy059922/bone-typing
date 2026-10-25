@@ -155,7 +155,7 @@ export default function App() {
   useEffect(() => setTheme(study ? 'study' : blindOn ? 'blind' : 'normal'), [study, blindOn]);
   const fullPool = cat === 'muscle' ? MUSCLES : BONES;
   const studyPool = fullPool.filter((b) => parts[cat].includes(partOf(b, cat)));
-  const studyId = studyKey(cat, lang, term, parts[cat]);
+  const studyId = studyKey(cat, lang, term, parts[cat], blind);
   const studyBest = getBest(studyId);
   const togglePart = (p: Part) =>
     setParts((all) => {
@@ -335,14 +335,14 @@ export default function App() {
     return (
       <>
         {study ? (
-          <Game key={round} cat={cat} pool={studyPool} lang={lang} kind="word" term={term} blind={false} study onDone={done} onQuit={() => setScreen('title')} />
+          <Game key={round} cat={cat} pool={studyPool} lang={lang} kind="word" term={term} blind={blind} study onDone={done} onQuit={() => setScreen('title')} />
         ) : (
           <Game key={round} cat={cat} pool={fullPool} lang={lang} kind={kind} term={term} blind={blindOn} order={roundInfo?.items} onFirstKey={() => roundInfo && beginRound(roundInfo.round)} onDone={done} onQuit={() => setScreen('title')} />
         )}
         {studyRes ? (
           <StudyResult
             result={studyRes.result}
-            label={[t(cat), lang === 'ko' ? t(term) : 'English', parts[cat].length === PARTS[cat].length ? t('scopeAll') : parts[cat].map((p) => partLabel(p, cat)).join('·')].join(' · ')}
+            label={[t(cat), lang === 'ko' ? t(term) : 'English', parts[cat].length === PARTS[cat].length ? t('scopeAll') : parts[cat].map((p) => partLabel(p, cat)).join('·'), ...(blind ? ['BLIND'] : [])].join(' · ')}
             best={studyRes.best}
             newBest={studyRes.newBest}
             onOk={() => {
@@ -460,6 +460,13 @@ export default function App() {
                     );
                   })}
                 </div>
+                <button className={`blind-toggle ${blind ? 'on' : ''}`} onClick={() => setBlind(!blind)} role="switch" aria-checked={blind}>
+                  <span className="blind-knob" />
+                  <span className="blind-text">
+                    <b>{t('blind')}</b>
+                    <small>{t('blindSub')}</small>
+                  </span>
+                </button>
                 <button className="start" onClick={start}>
                   {t('studyStart', {n: studyPool.length})}
                 </button>
