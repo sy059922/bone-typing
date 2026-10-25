@@ -109,7 +109,7 @@ const D = {
   // 학습 모드
   modeRanked: ['랭킹 도전', 'Ranked'],
   modeStudy: ['학습 모드', 'Study'],
-  studyNote: ['낱말 연습 · 고른 영역을 모두 맞혀야 끝나요. 틀리면 바로 다음 문제로 넘어가고, 틀린 문제는 섞여서 다시 나와요.', 'Words only. Finish every item in the chosen areas — a mistake skips ahead, and missed items come back shuffled until you get them all.'],
+  studyNote: ['낱말 연습 · 고른 영역을 모두 맞혀야 끝나요. 오타는 지우고 고칠 수 있고, 틀린 답을 확정하면 다음 문제로 넘어가요. 틀린 문제는 섞여서 다시 나와요.', 'Words only. Finish every item in the chosen areas — fix typos freely; submitting a wrong answer skips ahead, and missed items come back shuffled until you get them all.'],
   studyParts: ['영역', 'Areas'],
   studyCount: ['{n}문제', '{n} items'],
   studyStart: ['학습 시작 · {n}문제', 'Start · {n} items'],

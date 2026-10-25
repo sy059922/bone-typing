@@ -34,7 +34,7 @@ const targetOf = (b: Bone, lang: Lang, kind: Kind, term: Term) => {
   return term === 'native' ? NATIVE_SENTENCE[b.id] ?? toNative(b.sentence.ko) : b.sentence.ko;
 };
 
-// study: 학습 모드 — pool 전체를 섞어 내고, 틀리는 순간 다음 문제로. 틀린 문제는 회차가 끝나면 섞어서 다시 (다 맞힐 때까지)
+// study: 학습 모드 — pool 전체를 섞어 내고, 틀린 답을 확정하면 다음 문제로. 틀린 문제는 회차가 끝나면 섞어서 다시 (다 맞힐 때까지)
 export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; term: Term; blind: boolean; study?: boolean; order?: string[]; onFirstKey?: () => void; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, term, blind, study = false, order, onFirstKey, onDone, onQuit}) => {
   // 서버가 정해 준 문제 순서가 있으면 그대로 (랭킹 판정용), 없으면 무작위. 학습 모드는 틀린 문제를 뒤에 덧붙임
   const [queue, setQueue] = useState(() => {
@@ -149,11 +149,8 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     // 한글 판인데 영문이 들어오면 한/영 안내
     setLatinWarn(lang === 'ko' && /[a-zA-Z]/.test(v));
     const c = check(target, kind === 'word' ? v.trim() : v, lang);
-    if (study && !c.ok && v.trim()) {
-      miss();
-      return;
-    }
-    if (!c.ok && lastOk.current && v.length >= value.length && v.trim()) {
+    // 학습 모드: 치는 중 오타는 빨간 글자로만 보여 주고 고칠 수 있게 — 틀림은 확정(Space·Enter) 때만
+    if (!study && !c.ok && lastOk.current && v.length >= value.length && v.trim()) {
       stats.current.errors++;
       stats.current.clean = false;
       flashBad();
@@ -212,7 +209,7 @@ export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind
     setRevealed(false);
   }, [idx, queue, finish, study]);
 
-  // 학습: 틀린 순간 — 정답을 잠깐 보여 주고 다음 문제로, 이 문제는 다음 회차에 다시
+  // 학습: 틀린 답을 확정(또는 패스)한 순간 — 정답을 잠깐 보여 주고 다음 문제로, 이 문제는 다음 회차에 다시
   const miss = useCallback(() => {
     if (ended || passing) return;
     stats.current.errors++;
