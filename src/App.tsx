@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {BoneStage, IconStage, preloadModels} from './components/BoneStage';
 import {BONES} from './data/bones';
 import {MUSCLES} from './data/muscles';
+import {NERVES} from './data/nerves';
 import {modeLabel, modeOf, parseMode, type Category} from './lib/modes';
 import {setUi, t, useUi, type Ui} from './lib/i18n';
 import {Game, type Kind, type Result, type Term} from './Game';
@@ -60,6 +61,7 @@ const Board: React.FC<{mode: Mode; me?: string; refresh: number}> = ({mode, me, 
 };
 
 const IDLE = [{key: 'title-spine', model: BONES.find((b) => b.id === 'spine')!.model, slot: 'cur' as const}];
+const IDLE_NERVE = [{key: 'title-plexus', model: NERVES.find((b) => b.id === 'brachial_plexus')!.model, slot: 'cur' as const}];
 const IDLE_MUSCLE = [{key: 'title-quads', model: MUSCLES.find((b) => b.id === 'quadriceps')!.model, slot: 'cur' as const}];
 
 export default function App() {
@@ -113,7 +115,7 @@ export default function App() {
       /* 무시 */
     }
   };
-  const [parts, setParts] = useState<Record<Category, Part[]>>(() => ({bone: [...PARTS.bone], muscle: [...PARTS.muscle]}));
+  const [parts, setParts] = useState<Record<Category, Part[]>>(() => ({bone: [...PARTS.bone], muscle: [...PARTS.muscle], nerve: [...PARTS.nerve]}));
   const [studyRes, setStudyRes] = useState<{result: Result; best: number | null; newBest: boolean} | null>(null);
   const [lang, setLang] = useState<Lang>(() => (ui === 'en' ? 'en' : 'ko'));
   const [kind, setKind] = useState<Kind>('word');
@@ -153,9 +155,11 @@ export default function App() {
   const blindOn = blind && kind === 'word' && !study;
   // 곡: 학습 모드 = 로파이, 블라인드 = 살벌한 곡, 그 밖 = 칩튠
   useEffect(() => setTheme(study ? 'study' : blindOn ? 'blind' : 'normal'), [study, blindOn]);
-  const fullPool = cat === 'muscle' ? MUSCLES : BONES;
+  const fullPool = cat === 'muscle' ? MUSCLES : cat === 'nerve' ? NERVES : BONES;
   const studyPool = fullPool.filter((b) => parts[cat].includes(partOf(b, cat)));
-  const studyId = studyKey(cat, lang, term, parts[cat], blind);
+  // 학습 모드 블라인드는 낱말에서만
+  const studyBlind = blind && kind === 'word';
+  const studyId = studyKey(cat, lang, term, parts[cat], studyBlind, kind);
   const studyBest = getBest(studyId);
   const togglePart = (p: Part) =>
     setParts((all) => {
@@ -166,7 +170,7 @@ export default function App() {
 
   const mode = modeOf(cat, lang, kind, blindOn);
 
-  useEffect(() => preloadModels(cat === 'muscle' ? ['muscle_upper', 'muscle_lower', 'muscle_trunk', 'muscle_head'] : ['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot', 'skull', 'thorax']), [cat]);
+  useEffect(() => preloadModels(cat === 'muscle' ? ['muscle_upper', 'muscle_lower', 'muscle_trunk', 'muscle_head'] : cat === 'nerve' ? ['nerve_upper', 'nerve_lower', 'nerve_spine', 'nerve_head'] : ['spine', 'arm', 'hand', 'pelvis', 'leg', 'foot', 'skull', 'thorax']), [cat]);
 
   const start = async () => {
     if (study) {
@@ -295,7 +299,7 @@ export default function App() {
 
   // 개발용: ?bone=<id> 로 뼈 하나만 띄워 3D 확인
   const peek = new URLSearchParams(location.search).get('bone');
-  const peekBone = peek ? [...BONES, ...MUSCLES].find((b) => b.id === peek) : null;
+  const peekBone = peek ? [...BONES, ...MUSCLES, ...NERVES].find((b) => b.id === peek) : null;
   // 개발용: ?icon 으로 앱 아이콘(손뼈 '안녕') 렌더
   if (new URLSearchParams(location.search).has('icon')) {
     const hand = BONES.find((b) => b.id === 'phalanges')!.model;
@@ -317,7 +321,7 @@ export default function App() {
             <span className="logo-king">타자연습</span>
             <span className="logo-sub">BONE NAME TYPING</span>
           </div>
-          <div className="og-desc">뼈 73개 · 근육 113개를 3D로 보며 타자 연습 · 랭킹 도전</div>
+          <div className="og-desc">뼈 73개 · 근육 113개 · 신경 71개를 3D로 보며 타자 연습 · 랭킹 도전</div>
         </div>
         <div className="og-stage">
           <BoneStage items={IDLE} bad={false} bursts={[]} />
@@ -335,14 +339,14 @@ export default function App() {
     return (
       <>
         {study ? (
-          <Game key={round} cat={cat} pool={studyPool} lang={lang} kind="word" term={term} blind={blind} study onDone={done} onQuit={() => setScreen('title')} />
+          <Game key={round} cat={cat} pool={studyPool} lang={lang} kind={kind} term={term} blind={studyBlind} study onDone={done} onQuit={() => setScreen('title')} />
         ) : (
           <Game key={round} cat={cat} pool={fullPool} lang={lang} kind={kind} term={term} blind={blindOn} order={roundInfo?.items} onFirstKey={() => roundInfo && beginRound(roundInfo.round)} onDone={done} onQuit={() => setScreen('title')} />
         )}
         {studyRes ? (
           <StudyResult
             result={studyRes.result}
-            label={[t(cat), lang === 'ko' ? t(term) : 'English', parts[cat].length === PARTS[cat].length ? t('scopeAll') : parts[cat].map((p) => partLabel(p, cat)).join('·'), ...(blind ? ['BLIND'] : [])].join(' · ')}
+            label={[t(cat), lang === 'ko' ? t(term) : 'English', parts[cat].length === PARTS[cat].length ? t('scopeAll') : parts[cat].map((p) => partLabel(p, cat)).join('·'), t(kind), ...(studyBlind ? ['BLIND'] : [])].join(' · ')}
             best={studyRes.best}
             newBest={studyRes.newBest}
             onOk={() => {
@@ -382,7 +386,7 @@ export default function App() {
       }}
     >
       <div className="title-stage">
-        <BoneStage items={cat === 'muscle' ? IDLE_MUSCLE : IDLE} bad={false} bursts={[]} />
+        <BoneStage items={cat === 'muscle' ? IDLE_MUSCLE : cat === 'nerve' ? IDLE_NERVE : IDLE} bad={false} bursts={[]} />
       </div>
       <div className={`title-panel ${study ? 'study' : ''}`}>
         {screen === 'title' ? (
@@ -406,7 +410,7 @@ export default function App() {
               {t('logo1')}
               <br />
               <span className="logo-king">{t('logo2')}</span>
-              <span className="logo-sub">{cat === 'muscle' ? 'BONE NAME TYPING · MUSCLE EDITION' : 'BONE NAME TYPING'}</span>
+              <span className="logo-sub">{cat === 'muscle' ? 'BONE NAME TYPING · MUSCLE EDITION' : cat === 'nerve' ? 'BONE NAME TYPING · NERVE EDITION' : 'BONE NAME TYPING'}</span>
             </div>
             <div className="seg mode">
               <button className={!study ? 'on' : ''} onClick={() => setStudy(false)}>
@@ -417,12 +421,15 @@ export default function App() {
               </button>
             </div>
             {vs && !study ? <div className="vs">{t('vs', {n: vs.nickname, s: vs.score, m: modeLabel(vs.mode), r: vs.rank})}</div> : null}
-            <div className="seg">
+            <div className="seg three">
               <button className={cat === 'bone' ? 'on' : ''} onClick={() => setCat('bone')}>
                 {t('bone')}
               </button>
               <button className={cat === 'muscle' ? 'on' : ''} onClick={() => setCat('muscle')}>
                 {t('muscle')}
+              </button>
+              <button className={cat === 'nerve' ? 'on' : ''} onClick={() => setCat('nerve')}>
+                {t('nerve')}
               </button>
             </div>
             <div className="seg">
@@ -446,6 +453,14 @@ export default function App() {
             ) : null}
             {study ? (
               <>
+                <div className="seg">
+                  <button className={kind === 'word' ? 'on' : ''} onClick={() => setKind('word')}>
+                    {t('word')}
+                  </button>
+                  <button className={kind === 'sentence' ? 'on' : ''} onClick={() => setKind('sentence')}>
+                    {t('sentence')}
+                  </button>
+                </div>
                 <div className="note study-note">{t('studyNote')}</div>
                 <div className="parts" role="group" aria-label={t('studyParts')}>
                   {PARTS[cat].map((p) => {
@@ -460,11 +475,11 @@ export default function App() {
                     );
                   })}
                 </div>
-                <button className={`blind-toggle ${blind ? 'on' : ''}`} onClick={() => setBlind(!blind)} role="switch" aria-checked={blind}>
+                <button className={`blind-toggle ${studyBlind ? 'on' : ''}`} onClick={() => setBlind(!blind)} role="switch" aria-checked={studyBlind} disabled={kind !== 'word'}>
                   <span className="blind-knob" />
                   <span className="blind-text">
                     <b>{t('blind')}</b>
-                    <small>{t('blindSub')}</small>
+                    <small>{kind === 'word' ? t('blindSub') : t('blindWordOnly')}</small>
                   </span>
                 </button>
                 <button className="start" onClick={start}>

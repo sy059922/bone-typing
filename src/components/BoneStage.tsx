@@ -53,6 +53,9 @@ const GHOST = new THREE.MeshStandardMaterial({color: '#8C8C8C', roughness: 0.8, 
 // 근육 모드: 근육은 차분한 붉은 살색, 맥락 뼈는 흐린 흰색
 const MUSCLE = new THREE.MeshStandardMaterial({color: '#B5524A', roughness: 0.62, metalness: 0, emissive: '#5A1410', emissiveIntensity: 0.15});
 const GHOST_BONE = new THREE.MeshStandardMaterial({color: '#F2EFE8', roughness: 0.8, transparent: true, opacity: 0.22, depthWrite: false});
+// 신경: 노란 신경 (교과서 색) · 다른 신경은 흐린 노랑
+const NERVE = new THREE.MeshStandardMaterial({color: '#F2C94C', roughness: 0.5, metalness: 0, emissive: '#7A5A00', emissiveIntensity: 0.25});
+const GHOST_NERVE = new THREE.MeshStandardMaterial({color: '#E8C55A', roughness: 0.7, transparent: true, opacity: 0.28, depthWrite: false});
 const BAD = new THREE.MeshStandardMaterial({color: '#E5484D', roughness: 0.55, emissive: '#E5484D', emissiveIntensity: 0.25});
 
 // 자리: 왼쪽(방금 친 뼈) · 가운데(지금 칠 뼈) · 오른쪽(다음 뼈) · gone(왼쪽 밖으로 사라짐)
@@ -92,14 +95,17 @@ const Mover: React.FC<{slot: Slot; bad: number; children: React.ReactNode}> = ({
 
 const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, bad, dim}) => {
   const {scene} = useGLTF(`/models/${model.file}.glb`, false, true);
-  const isMuscle = model.file.startsWith('muscle');
+  const isNerve = model.file.startsWith('nerve');
+  // 근육·신경: 강조할 것 기준으로 확대하고 맥락 뼈는 흐린 뼈색
+  const isMuscle = model.file.startsWith('muscle') || isNerve;
   const compact = useThree((st) => st.size.width < 700);
   const bone = useMemo(() => {
-    const m = (isMuscle ? MUSCLE : BONE).clone();
+    const m = (isNerve ? NERVE : isMuscle ? MUSCLE : BONE).clone();
     m.transparent = true;
     return m;
-  }, [isMuscle]);
+  }, [isMuscle, isNerve]);
   const ghost = useMemo(() => (isMuscle ? GHOST_BONE : GHOST).clone(), [isMuscle]);
+  const ghostNerve = useMemo(() => GHOST_NERVE.clone(), []);
   const built = useMemo(() => {
     const meshes = new Map<string, THREE.Mesh>();
     scene.updateMatrixWorld(true);
@@ -129,7 +135,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
       const m = meshes.get(n)!;
       if (done.has(m)) continue;
       done.add(m);
-      const c = new THREE.Mesh(m.geometry, hl.has(n) ? bone : ghost);
+      const c = new THREE.Mesh(m.geometry, hl.has(n) ? bone : isNerve && n.startsWith('n_') ? ghostNerve : ghost);
       c.userData.hl = hl.has(n);
       c.applyMatrix4(m.matrixWorld);
       c.renderOrder = hl.has(n) ? 1 : 0;
@@ -166,7 +172,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
     const wrap = new THREE.Group();
     wrap.add(holder);
     return {wrap, count: done.size, hlCount: hl.size};
-  }, [scene, model, bone, ghost, isMuscle, compact]);
+  }, [scene, model, bone, ghost, ghostNerve, isMuscle, isNerve, compact]);
 
   built.wrap.traverse((o) => {
     const m = o as THREE.Mesh;
@@ -178,6 +184,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
     bone.opacity += ((dim ? 0.28 : 1) - bone.opacity) * k;
     bone.depthWrite = bone.opacity > 0.95;
     ghost.opacity += ((dim ? 0.05 : isMuscle ? 0.22 : 0.16) - ghost.opacity) * k;
+    ghostNerve.opacity += ((dim ? 0.06 : 0.28) - ghostNerve.opacity) * k;
     if (!isMuscle) bone.emissiveIntensity = 0.02 + 0.015 * Math.sin(st.clock.elapsedTime * 2.4);
   });
   if (built.count === 0) return <Placeholder />;

@@ -2,7 +2,7 @@
 // ko = 옛 한자어 용어, tag = 같은 이름이 둘일 때 화면에만 붙는 꼬리표
 // model = 3D 조립 파일(public/models/<file>.glb)의 노드 — hl 은 강조, show 는 흐린 맥락(없으면 hl 만), showPhone 은 폰에서 더 넓게 보여 줄 맥락
 
-export type ModelFile = 'spine' | 'arm' | 'hand' | 'pelvis' | 'leg' | 'foot' | 'skull' | 'thorax' | 'muscle_upper' | 'muscle_lower' | 'muscle_trunk' | 'muscle_head';
+export type ModelFile = 'spine' | 'arm' | 'hand' | 'pelvis' | 'leg' | 'foot' | 'skull' | 'thorax' | 'muscle_upper' | 'muscle_lower' | 'muscle_trunk' | 'muscle_head' | 'nerve_upper' | 'nerve_lower' | 'nerve_spine' | 'nerve_head';
 export type ModelRef = {file: ModelFile; hl: string[]; show?: string[]; showPhone?: string[]};
 export type Bone = {
   id: string;

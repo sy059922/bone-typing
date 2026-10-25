@@ -38,3 +38,15 @@
 6. **재질**: 텍스처 없는 뼈색 기본 재질 하나(`bone`).
 
 변환 스크립트: `scripts/models/build.mjs` (검증·미리보기: `scripts/models/verify.mjs`)
+
+## 추가 (2026-10-25)
+
+- 머리뼈·가슴 (`skull.glb`, `thorax.glb`) 과 몸통·목·머리 근육 (`muscle_trunk.glb`, `muscle_head.glb`): **BodyParts3D** Release 3.0 (위와 같은 판·라이선스).
+  변환: `scripts/models/build.mjs` (`ONLY=skull,thorax`), `scripts/models/build_muscles.mjs --v3`.
+- 신경 (`nerve_upper.glb`, `nerve_lower.glb`, `nerve_spine.glb`, `nerve_head.glb`): **Z-Anatomy** — The libre 3D atlas of anatomy, CC BY-SA 4.0
+  (https://github.com/Z-Anatomy/Models-of-human-anatomy, BodyParts3D 기반 · 뇌신경 원모델 University of Dundee CAHID, CC BY 4.0).
+  원 표기: "Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0", "BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan".
+  고친 내용: 근골격계 운동·감각신경과 뇌신경만 골라 신경 곡선에 굵기를 다시 주어 관 모양 메시로 바꿈, 한 신경의 가지를 노드 하나로 합침,
+  같은 파일의 뼈를 맥락 뼈(b_*)로 합침, 경량화·압축. 이 네 파일은 **CC BY-SA 4.0** 으로 배포한다.
+  변환: `scripts/models/export_nerves.py` (Blender) → `scripts/models/compress_nerves.mjs`.
+  (Z-Anatomy 안의 속귀·신장 모델은 비상업 조건이라 쓰지 않음.)

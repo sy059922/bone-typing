@@ -3,12 +3,13 @@ import type {Category} from './modes';
 import type {Lang} from './typing';
 import {getUi} from './i18n';
 
-// 학습 모드: 낱말만 · 고른 영역의 문제를 모두 맞혀야 끝남 (틀린 문제는 다시) · 결과는 걸린 시간
+// 학습 모드: 낱말 · 문장 · 고른 영역의 문제를 모두 맞혀야 끝남 (틀린 문제는 다시) · 결과는 걸린 시간
 export type Part = 'head' | 'spine' | 'thorax' | 'trunk' | 'upper' | 'lower';
 
 export const PARTS: Record<Category, Part[]> = {
   bone: ['head', 'spine', 'thorax', 'upper', 'lower'],
   muscle: ['head', 'trunk', 'upper', 'lower'],
+  nerve: ['head', 'spine', 'upper', 'lower'],
 };
 
 const LABEL: Record<Part, [string, string]> = {
@@ -23,6 +24,8 @@ export const partLabel = (p: Part, cat: Category) => {
   const en = getUi() === 'en';
   // 뼈의 하지에는 골반이 함께 들어감
   if (p === 'lower' && cat === 'bone') return en ? 'Pelvis & lower limb' : '골반·하지';
+  if (p === 'spine' && cat === 'nerve') return en ? 'Spinal cord & trunk' : '척수·몸통';
+  if (p === 'head' && cat === 'nerve') return en ? 'Cranial nerves' : '뇌신경';
   return LABEL[p][en ? 1 : 0];
 };
 
@@ -36,6 +39,7 @@ export const partOf = (b: Bone, cat: Category): Part => {
     if (f === 'arm' || f === 'hand') return 'upper';
     return 'lower';
   }
+  if (cat === 'nerve') return f === 'nerve_head' ? 'head' : f === 'nerve_spine' ? 'spine' : f === 'nerve_upper' ? 'upper' : 'lower';
   const r = b.region;
   if (r === 'head' || r === 'neck') return 'head';
   if (r === 'trunk') return 'trunk';
@@ -56,8 +60,8 @@ export const formatTime = (ms: number) => {
 
 // 이 기기 최고 기록 (같은 분류 · 언어 · 용어 · 영역 조합끼리)
 const BEST = 'bone-typing:study-best';
-export const studyKey = (cat: Category, lang: Lang, term: string, parts: Part[], blind = false) =>
-  `${cat}|${lang}|${lang === 'ko' ? term : '-'}|${[...parts].sort().join(',')}${blind ? '|blind' : ''}`;
+export const studyKey = (cat: Category, lang: Lang, term: string, parts: Part[], blind = false, kind = 'word') =>
+  `${cat}|${lang}|${lang === 'ko' ? term : '-'}|${[...parts].sort().join(',')}${blind ? '|blind' : ''}${kind === 'sentence' ? '|sentence' : ''}`;
 const readBest = (): Record<string, number> => {
   try {
     return JSON.parse(localStorage.getItem(BEST) || '{}');

@@ -3,11 +3,12 @@
 import {writeFileSync} from 'node:fs';
 import {BONES} from '../src/data/bones.ts';
 import {MUSCLES} from '../src/data/muscles.ts';
+import {NERVES} from '../src/data/nerves.ts';
 import {NATIVE_NAME, NATIVE_SENTENCE, toNative} from '../src/data/native.ts';
 import {units} from '../src/lib/typing.ts';
 
 const rows: string[] = [];
-for (const [cat, pool] of [['bone', BONES], ['muscle', MUSCLES]] as const) {
+for (const [cat, pool] of [['bone', BONES], ['muscle', MUSCLES], ['nerve', NERVES]] as const) {
   for (const b of pool) {
     for (const kind of ['word', 'sentence'] as const) {
       const variants: [string, string, string][] = [

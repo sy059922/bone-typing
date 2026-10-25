@@ -43,6 +43,7 @@ const D = {
   bone: ['뼈', 'Bones'],
   langKo: ['한글', 'Korean'],
   muscle: ['근육', 'Muscles'],
+  nerve: ['신경', 'Nerves'],
   hanja: ['한자어', 'Sino-Korean'],
   native: ['우리말', 'Native'],
   word: ['낱말 연습', 'Words'],
@@ -68,7 +69,7 @@ const D = {
   boardErr: ['랭킹을 불러오지 못했어요', 'Couldn’t load the ranking'],
   boardEmpty: ['아직 기록이 없어요. 첫 1등을 노려 보세요!', 'No records yet — be the first!'],
   cpmUnit: ['타', 'CPM'],
-  credit: ['3D 뼈 모델: BodyParts3D © DBCLS, CC BY-SA 2.1 JP (단위·경량화·이름 수정)', '3D models: BodyParts3D © DBCLS, CC BY-SA 2.1 JP (units, simplification, names modified)'],
+  credit: ['3D 모델: BodyParts3D © DBCLS, CC BY-SA 2.1 JP · 신경: Z-Anatomy, CC BY-SA 4.0 (단위·경량화·이름 수정)', '3D models: BodyParts3D © DBCLS, CC BY-SA 2.1 JP · nerves: Z-Anatomy, CC BY-SA 4.0 (units, simplification, names modified)'],
   bgmTitle: ['배경음악', 'Music'],
   sfxTitle: ['효과음', 'Sound effects'],
   // 게임
@@ -109,7 +110,7 @@ const D = {
   // 학습 모드
   modeRanked: ['랭킹 도전', 'Ranked'],
   modeStudy: ['학습 모드', 'Study'],
-  studyNote: ['낱말 연습 · 고른 영역을 모두 맞혀야 끝나요. 오타는 지우고 고칠 수 있고, 틀린 답을 확정하면 다음 문제로 넘어가요. 틀린 문제는 섞여서 다시 나와요.', 'Words only. Finish every item in the chosen areas — fix typos freely; submitting a wrong answer skips ahead, and missed items come back shuffled until you get them all.'],
+  studyNote: ['고른 영역을 모두 맞혀야 끝나요. 오타는 지우고 고칠 수 있고, 틀린 답을 확정하면 다음 문제로 넘어가요. 틀린 문제는 섞여서 다시 나와요.', 'Finish every item in the chosen areas — fix typos freely; submitting a wrong answer skips ahead, and missed items come back shuffled until you get them all.'],
   studyParts: ['영역', 'Areas'],
   studyCount: ['{n}문제', '{n} items'],
   studyStart: ['학습 시작 · {n}문제', 'Start · {n} items'],

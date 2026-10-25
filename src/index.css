@@ -1235,3 +1235,8 @@ html.in-game body {
     order: 3;
   }
 }
+
+/* 분류 세 개 (뼈 · 근육 · 신경) */
+.seg.three {
+  grid-template-columns: 1fr 1fr 1fr;
+}

@@ -13,7 +13,7 @@ export default async function handler(req: Request) {
   const title = s ? `${s.nickname}님 ${s.score}점 · 뼈쟁이 타자연습` : '뼈쟁이 타자연습';
   const desc = s
     ? `${MODE_KO[s.mode]} ${s.cpm}타 · 정확도 ${s.accuracy.toFixed(1)}% · 전체 ${s.rank}위. 이 기록에 도전해 보세요!`
-    : '뼈 73개 · 근육 113개를 3D로 보며 타자 연습. 랭킹에 도전해 보세요!';
+    : '뼈 73개 · 근육 113개 · 신경 71개를 3D로 보며 타자 연습. 랭킹에 도전해 보세요!';
   const image = s ? `${origin}/api/og?id=${id}` : `${origin}/og.png`;
   const dest = s ? `/?vs=${id}` : '/';
   const html = `<!doctype html>

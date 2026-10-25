@@ -14,12 +14,13 @@ const MODE_BASE: Record<string, string> = {
   'en-word': '영어 낱말',
   'en-sentence': '영어 문장',
 };
-// 'b-' 로 시작하면 블라인드, (그 뒤) 'm-' 로 시작하면 근육 모드
+// 'b-' 로 시작하면 블라인드, (그 뒤) 'm-' 근육 · 'n-' 신경 · 없으면 뼈
 export const MODE_KO = new Proxy({} as Record<string, string>, {
   get: (_, mode: string) => {
     const blind = mode.startsWith('b-');
     const m = blind ? mode.slice(2) : mode;
-    return `${blind ? '블라인드 ' : ''}${m.startsWith('m-') ? `근육 ${MODE_BASE[m.slice(2)]}` : `뼈 ${MODE_BASE[m]}`}`;
+    const cat = m.startsWith('m-') ? '근육' : m.startsWith('n-') ? '신경' : '뼈';
+    return `${blind ? '블라인드 ' : ''}${cat} ${MODE_BASE[m.replace(/^[mn]-/, '')]}`;
   },
 });
 
