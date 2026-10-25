@@ -14,7 +14,8 @@ import bpy, sys, re, os
 OUT = sys.argv[sys.argv.index('--') + 1]
 os.makedirs(OUT, exist_ok=True)
 
-BIG, MID, SMALL, CN, CN_S = 0.0035, 0.0022, 0.0014, 0.0016, 0.0011
+# 2026-10-25 사용자 피드백(구분이 안 됨) 뒤로 한 단계 굵게
+BIG, MID, SMALL, CN, CN_S = 0.005, 0.0034, 0.0024, 0.0024, 0.0017
 
 def R(*names):  # 오른쪽 (.r) — 이름 끝에 접미사가 없는 것도 찾음
     return [n + '.r' for n in names]
@@ -61,7 +62,7 @@ NERVES = {
         'n_saphenous': (R('Saphenous nerve', 'Infrapatellar branch of saphenous nerve', 'Medial crural cutaneous branches of saphenous nerve'), MID),
         'n_obturator': (R('Obturator nerve', 'Anterior branch of obturator nerve', 'Posterior branch of obturator nerve'), MID),
         'n_sup_gluteal': (R('Superior gluteal nerve'), MID),
-        'n_sciatic': (R('Sciatic nerve'), 0.0015),  # 원본 곡선 자체가 굵게 잡혀 있어 반지름을 줄임
+        'n_sciatic': (R('Sciatic nerve'), 0.0021),  # 원본 곡선 자체가 굵게 잡혀 있어 반지름을 줄임
         'n_pfcn': (R('Posterior femoral cutaneous nerve', 'Anterior root of posterior femoral cutaneous nerve', 'Posterior root of posterior femoral cutaneous nerve'), MID),
         'n_pudendal': (R('Pudendal nerve'), MID),
         'n_tibial': (R('Tibial nerve'), BIG),
@@ -98,6 +99,99 @@ NERVES = {
         'n_vagus': (LR('Vagus nerve (X)'), CN),
         'n_accessory': (LR('Accessory nerve (XI)'), CN),
         'n_hypoglossal': (LR('Hypoglossal nerve (XII)'), CN),
+    },
+}
+
+# 맥락 근육·구조물 (m_*) — 신경이 지배하거나 지나가는 길목. 게임에서 신경마다 몇 개만 골라 반투명 빨강으로 보여 준다
+MUSCLES = {
+    'nerve_upper': {
+        'm_scalenes': R('Scalenus anterior muscle', 'Scalenus medius muscle', 'Scalenus posterior muscle'),
+        'm_rhomboid': R('Rhomboid major muscle', 'Rhomboid minor muscle'),
+        'm_levator_scap': R('Levator scapulae'),
+        'm_serratus_ant': R('Serratus anterior muscle'),
+        'm_supraspinatus': R('Supraspinatus muscle'),
+        'm_infraspinatus': R('Infraspinatus muscle'),
+        'm_subclavius': R('Subclavius muscle'),
+        'm_pec_major': R('Clavicular head of pectoralis major muscle', 'Sternocostal head of pectoralis major muscle', '(Abdominal part of pectoralis major muscle)'),
+        'm_pec_minor': R('Pectoralis minor muscle'),
+        'm_subscapularis': R('Subscapularis muscle'),
+        'm_teres_major': R('Teres major muscle'),
+        'm_teres_minor': R('Teres minor muscle'),
+        'm_latissimus': R('Latissimus dorsi muscle'),
+        'm_deltoid': R('Clavicular part of deltoid muscle', 'Acromial part of deltoid muscle', 'Scapular spinal part of deltoid muscle'),
+        'm_coracobrachialis': R('Coracobrachialis muscle'),
+        'm_biceps': R('Long head of biceps brachii', 'Short head of biceps brachii'),
+        'm_brachialis': R('Brachialis muscle'),
+        'm_triceps': R('Long head of triceps brachii', 'Lateral head of triceps brachii', 'Medial head of triceps brachii'),
+        'm_brachioradialis': R('Brachioradialis muscle'),
+        'm_ecr': R('Extensor carpi radialis longus', 'Extensor carpi radialis brevis'),
+        'm_supinator': R('Supinator'),
+        'm_ext_digitorum': R('Extensor digitorum'),
+        'm_pronator_teres': R('Deep head of pronator teres', 'Superficial head of pronator teres'),
+        'm_fds': R('Humero-ulnar head of flexor digitorum superficialis', 'Radial head of flexor digitorum superficialis'),
+        'm_fpl': R('Flexor pollicis longus'),
+        'm_fdp': R('Flexor digitorum profundus'),
+        'm_pronator_quad': R('Pronator quadratus'),
+        'm_fcu': R('Humeral head of flexor carpi ulnaris', 'Ulnar head of flexor carpi ulnaris'),
+        'm_flexor_ret': R('Flexor retinaculum of wrist'),
+        'm_thenar': R('Abductor pollicis brevis', 'Opponens pollicis muscle', 'Superficial head of flexor pollicis brevis'),
+        'm_hypothenar': R('Abductor digiti minimi of hand', 'Flexor digiti minimi of hand', 'Opponens digiti minimi muscle of hand'),
+        'm_interossei': R('Dorsal interossei muscles of hand', 'Palmar interossei muscles', 'Oblique head of adductor pollicis', 'Transverse head of adductor pollicis'),
+    },
+    'nerve_lower': {
+        'm_psoas': R('Psoas major'),
+        'm_iliacus': R('Iliacus muscle'),
+        'm_quadratus_lumb': R('Quadratus lumborum muscle'),
+        'm_transversus_abd': R('Transversus abdominis muscle'),
+        'm_int_oblique': R('Internal abdominal oblique muscle'),
+        'm_inguinal_lig': R('Inguinal ligament'),
+        'm_sartorius': R('Sartorius muscle'),
+        'm_tfl': R('Tensor fasciae latae'),
+        'm_quadriceps': R('Rectus femoris muscle', 'Vastus lateralis muscle', 'Vastus medialis muscle', 'Vastus intermedius muscle'),
+        'm_vastus_medialis': R('Vastus medialis muscle'),
+        'm_adductors': R('Adductor longus', 'Adductor brevis', 'Adductor magnus', 'Gracilis muscle'),
+        'm_obt_ext': R('Obturator externus'),
+        'm_glut_med': R('Gluteus medius muscle'),
+        'm_glut_min': R('Gluteus minimus muscle'),
+        'm_glut_max': R('Gluteus maximus muscle'),
+        'm_piriformis': R('Piriformis muscle'),
+        'm_hamstrings': R('Long head of biceps femoris', 'Short head of biceps femoris', 'Semitendinosus muscle', 'Semimembranosus muscle'),
+        'm_biceps_fem': R('Long head of biceps femoris', 'Short head of biceps femoris'),
+        'm_obt_int': R('Obturator internus'),
+        'm_coccygeus': R('Coccygeus muscle'),
+        'm_gastroc': R('Medial head of gastrocnemius', 'Lateral head of gastrocnemius'),
+        'm_soleus': R('Soleus muscle'),
+        'm_flexor_ret_ankle': R('Flexor retinaculum of ankle'),
+        'm_fib_long': R('Fibularis longus muscle'),
+        'm_fib_brev': R('Fibularis brevis muscle'),
+        'm_tib_ant': R('Tibialis anterior muscle'),
+        'm_ehl': R('Extensor hallucis longus'),
+        'm_edl': R('Extensor digitorum longus'),
+        'm_abd_hallucis': R('Abductor hallucis'),
+        'm_fdb': R('Flexor digitorum brevis'),
+        'm_abd_dm_foot': R('Abductor digiti minimi of foot'),
+        'm_quad_plantae': R('Quadratus plantae muscle'),
+    },
+    'nerve_spine': {
+        'm_intercostals': LR('External intercostal muscles', 'Internal intercostal muscles'),
+        'm_psoas': LR('Psoas major'),
+    },
+    'nerve_head': {
+        'm_eye': LR('Sclera', 'Cornea'),
+        'm_eom': LR('Superior rectus muscle', 'Inferior rectus muscle', 'Medial rectus muscle', 'Inferior oblique muscle', 'Levator palpebrae superioris'),
+        'm_sup_oblique': LR('Superior oblique muscle', 'Trochlea of superior oblique muscle'),
+        'm_lat_rectus': LR('Lateral rectus muscle'),
+        'm_masseter': LR('Superficial part of masseter', 'Deep part of masseter'),
+        'm_temporalis': LR('Temporalis muscle'),
+        'm_pterygoids': LR('Medial pterygoid muscle', 'Superior head of lateral pterygoid muscle', 'Inferior head of lateral pterygoid muscle'),
+        'm_facial': LR('Orbicularis oris muscle', 'Orbital part of orbicularis oculi', 'Zygomaticus major muscle', 'Frontalis muscle', 'Bucinator'),
+        'm_parotid': LR('Parotid gland'),
+        'm_tongue': ['Tongue'] + LR('Genioglossus muscle', 'Hyoglossus muscle'),
+        'm_mylohyoid': LR('Mylohyoid muscle', 'Anterior belly of digastric muscle'),
+        'm_stylopharyngeus': LR('Stylopharyngeus muscle'),
+        'm_thyroid': ['Thyroid gland'] + LR('Inferior pharyngeal constrictor'),
+        'm_scm': LR('Sternocleidomastoid muscle'),
+        'm_trapezius': LR('Descending part of trapezius muscle', 'Transverse part of trapezius muscle'),
     },
 }
 
@@ -181,6 +275,20 @@ for file, nodes in NERVES.items():
         ob = join(node, meshes, coll)
         made.append(ob)
         report.append(f'{file}/{node}: parts {len(meshes)} tris~{sum(len(p.vertices) - 2 for p in ob.data.polygons)}' + (f'  missing {missing}' if missing else ''))
+    for node, names in MUSCLES[file].items():
+        meshes, missing = [], []
+        for n in names:
+            o = bpy.data.objects.get(n) or bpy.data.objects.get(re.sub(r'\.r$', '', n))
+            if not o or o.type != 'MESH':
+                if not n.endswith('.l'):
+                    missing.append(n)
+                continue
+            meshes.append(to_mesh(o, 0))
+        if not meshes:
+            report.append(f'{file}/{node}: EMPTY {missing}')
+            continue
+        made.append(join(node, meshes, coll))
+        report.append(f'{file}/{node}: muscles {len(meshes)}' + (f'  missing {missing}' if missing else ''))
     for node, pat in BONES[file].items():
         rx = re.compile(pat)
         srcs = [o for o in sk.objects if o.type == 'MESH' and rx.search(o.name)]
@@ -193,6 +301,9 @@ for file, nodes in NERVES.items():
     bpy.context.view_layer.objects.active = made[0]
     bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, file + '.glb'), export_format='GLB', use_selection=True, export_yup=True,
                               export_apply=True, export_materials='NONE', export_normals=True, export_texcoords=False)
+    # 다음 파일에서 같은 이름(b_pelvis, m_psoas …)을 쓸 수 있게 만든 개체를 지움 (안 지우면 '.001' 이 붙음)
+    for ob in made:
+        bpy.data.objects.remove(ob, do_unlink=True)
     bpy.data.collections.remove(coll)
 
 print('\n'.join(report))

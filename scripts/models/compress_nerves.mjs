@@ -17,7 +17,7 @@ const manifestPath = path.join(outDir, 'manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 manifest.remarks = [
   ...(manifest.remarks || []).filter((r) => !r.startsWith('nerve_')),
-  'nerve_*.glb come from Z-Anatomy (CC BY-SA 4.0, built on BodyParts3D): nerve curves re-thickened (radius 1.1-3.5 mm) and converted to tube meshes; context bones (nodes "b_*") come from the same Z-Anatomy file so they line up. Nodes "n_*" are nerves. Licensed CC BY-SA 4.0 as adapted material.',
+  'nerve_*.glb come from Z-Anatomy (CC BY-SA 4.0, built on BodyParts3D): nerve curves re-thickened (radius 1.1-3.5 mm) and converted to tube meshes; context bones (nodes "b_*") come from the same Z-Anatomy file so they line up. Nodes "n_*" are nerves, "m_*" context muscles and glands (same file). Licensed CC BY-SA 4.0 as adapted material.',
 ];
 for (const f of fs.readdirSync(inDir).filter((x) => /^nerve_.*\.glb$/.test(x))) {
   const doc = await io.read(path.join(inDir, f));
@@ -27,17 +27,17 @@ for (const f of fs.readdirSync(inDir).filter((x) => /^nerve_.*\.glb$/.test(x))) 
     const mesh = node.getMesh();
     if (!mesh) continue;
     const name = node.getName();
-    const cap = name.startsWith('b_') ? BONE_CAP[name] ?? 6000 : NERVE_CAP;
+    const cap = name.startsWith('b_') ? BONE_CAP[name] ?? 6000 : name.startsWith('m_') ? 5000 : NERVE_CAP;
     for (const prim of mesh.listPrimitives()) {
       const before = prim.getIndices().getCount() / 3;
-      if (before > cap) simplifyPrimitive(prim, { simplifier: MeshoptSimplifier, ratio: cap / before, error: name.startsWith('b_') ? 0.01 : 0.003 });
+      if (before > cap) simplifyPrimitive(prim, { simplifier: MeshoptSimplifier, ratio: cap / before, error: name.startsWith('n_') ? 0.003 : 0.01 });
     }
     const p = mesh.listPrimitives()[0];
     const pos = p.getAttribute('POSITION');
     const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity], v = [0, 0, 0];
     for (let i = 0; i < pos.getCount(); i++) { pos.getElement(i, v); for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], v[k]); max[k] = Math.max(max[k], v[k]); } }
     const r = (x) => Math.round(x * 1e5) / 1e5;
-    nodes[name] = { kind: name.startsWith('b_') ? 'bone' : 'nerve', bbox: { min: min.map(r), max: max.map(r) }, triangles: p.getIndices().getCount() / 3 };
+    nodes[name] = { kind: name.startsWith('b_') ? 'bone' : name.startsWith('m_') ? 'muscle' : 'nerve', bbox: { min: min.map(r), max: max.map(r) }, triangles: p.getIndices().getCount() / 3 };
   }
   await doc.transform(dedup(), prune(), meshopt({ encoder: MeshoptEncoder, level: 'medium', quantizationVolume: 'scene', quantizePosition: 14, quantizeNormal: 10 }));
   const out = path.join(outDir, f);

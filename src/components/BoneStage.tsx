@@ -54,7 +54,9 @@ const GHOST = new THREE.MeshStandardMaterial({color: '#8C8C8C', roughness: 0.8, 
 const MUSCLE = new THREE.MeshStandardMaterial({color: '#B5524A', roughness: 0.62, metalness: 0, emissive: '#5A1410', emissiveIntensity: 0.15});
 const GHOST_BONE = new THREE.MeshStandardMaterial({color: '#F2EFE8', roughness: 0.8, transparent: true, opacity: 0.22, depthWrite: false});
 // 신경: 노란 신경 (교과서 색) · 다른 신경은 흐린 노랑
-const NERVE = new THREE.MeshStandardMaterial({color: '#F2C94C', roughness: 0.5, metalness: 0, emissive: '#7A5A00', emissiveIntensity: 0.25});
+const NERVE = new THREE.MeshStandardMaterial({color: '#FFD84A', roughness: 0.42, metalness: 0, emissive: '#B08600', emissiveIntensity: 0.45});
+// 신경 모드의 주변 근육·구조물: 반투명 빨강 (신경이 비쳐 보이게 깊이 기록 안 함)
+const CTX_MUSCLE = new THREE.MeshStandardMaterial({color: '#C25A50', roughness: 0.7, metalness: 0, emissive: '#3A0A06', emissiveIntensity: 0.4, transparent: true, opacity: 0.55, depthWrite: false});
 const GHOST_NERVE = new THREE.MeshStandardMaterial({color: '#E8C55A', roughness: 0.7, transparent: true, opacity: 0.28, depthWrite: false});
 const BAD = new THREE.MeshStandardMaterial({color: '#E5484D', roughness: 0.55, emissive: '#E5484D', emissiveIntensity: 0.25});
 
@@ -106,6 +108,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
   }, [isMuscle, isNerve]);
   const ghost = useMemo(() => (isMuscle ? GHOST_BONE : GHOST).clone(), [isMuscle]);
   const ghostNerve = useMemo(() => GHOST_NERVE.clone(), []);
+  const ctxMuscle = useMemo(() => CTX_MUSCLE.clone(), []);
   const built = useMemo(() => {
     const meshes = new Map<string, THREE.Mesh>();
     scene.updateMatrixWorld(true);
@@ -135,10 +138,12 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
       const m = meshes.get(n)!;
       if (done.has(m)) continue;
       done.add(m);
-      const c = new THREE.Mesh(m.geometry, hl.has(n) ? bone : isNerve && n.startsWith('n_') ? ghostNerve : ghost);
+      const ctx = isNerve && n.startsWith('m_');
+      const c = new THREE.Mesh(m.geometry, hl.has(n) ? bone : ctx ? ctxMuscle : isNerve && n.startsWith('n_') ? ghostNerve : ghost);
       c.userData.hl = hl.has(n);
+      c.userData.ctx = ctx;
       c.applyMatrix4(m.matrixWorld);
-      c.renderOrder = hl.has(n) ? 1 : 0;
+      c.renderOrder = hl.has(n) ? 2 : ctx ? 1 : 0;
       group.add(c);
     }
     const holder = new THREE.Group();
@@ -154,7 +159,12 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
     if (isMuscle || compact) {
       group.children.forEach((c) => c.userData.hl && box.expandByObject(c));
       const hlSpan = span(box);
-      if (isMuscle) frame = hlSpan * 1.36;
+      if (isNerve) {
+        // 신경 중심으로 잡되 주변 구조물이 보이게 넓힘 (짧은 신경은 최대 2.4배까지만 — 긴 근육 때문에 화면이 너무 넓어지지 않게)
+        const all = box.clone();
+        group.children.forEach((c) => c.userData.ctx && all.expandByObject(c));
+        frame = Math.max(hlSpan * 1.2, Math.min(span(all) * 1.05, hlSpan * 2.4));
+      } else if (isMuscle) frame = hlSpan * 1.36;
       else {
         // 폰: 작은 뼈(슬개골·족근골·두상골)도 주변 뼈가 보이게 — 뼈 크기의 3배 또는 전체의 60% 중 큰 쪽, 너무 멀어지진 않게
         const allSpan = span(new THREE.Box3().setFromObject(group));
@@ -172,7 +182,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
     const wrap = new THREE.Group();
     wrap.add(holder);
     return {wrap, count: done.size, hlCount: hl.size};
-  }, [scene, model, bone, ghost, ghostNerve, isMuscle, isNerve, compact]);
+  }, [scene, model, bone, ghost, ghostNerve, ctxMuscle, isMuscle, isNerve, compact]);
 
   built.wrap.traverse((o) => {
     const m = o as THREE.Mesh;
@@ -185,6 +195,7 @@ const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, 
     bone.depthWrite = bone.opacity > 0.95;
     ghost.opacity += ((dim ? 0.05 : isMuscle ? 0.22 : 0.16) - ghost.opacity) * k;
     ghostNerve.opacity += ((dim ? 0.06 : 0.28) - ghostNerve.opacity) * k;
+    ctxMuscle.opacity += ((dim ? 0.1 : 0.55) - ctxMuscle.opacity) * k;
     if (!isMuscle) bone.emissiveIntensity = 0.02 + 0.015 * Math.sin(st.clock.elapsedTime * 2.4);
   });
   if (built.count === 0) return <Placeholder />;
