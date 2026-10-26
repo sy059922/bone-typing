@@ -43,15 +43,40 @@ export type Check = {
 // 영어는 대소문자를 구분하지 않음 (’ 같은 꼬부랑 따옴표도 ' 로)
 export const norm = (s: string, lang: Lang) => (lang === 'en' ? s.toLowerCase().replace(/[’‘]/g, "'") : s);
 
+// 쌍자음을 같은 자음 두 개로 (비교용). 'ㄱ 두 번 → ㄲ' 키보드는 늑+ㄱ 을 잠깐 '늒'(받침 ㄲ)으로 만들었다가
+// 모음이 오면 '늑고' 로 가르므로, ㄲ 과 ㄱㄱ 를 같게 봐야 중간 글자를 오타로 잡지 않음 (2026-10-26 사용자 제보)
+const DOUBLE: Record<string, string> = {ㄲ: 'ㄱ', ㄸ: 'ㄷ', ㅃ: 'ㅂ', ㅆ: 'ㅅ', ㅉ: 'ㅈ'};
+// 펼친 자모 목록과 각 자모가 원래 몇 번째 단위였는지
+const expand = (us: string[]) => {
+  const out: string[] = [];
+  const from: number[] = [];
+  us.forEach((u, i) => {
+    const d = DOUBLE[u];
+    if (d) {
+      out.push(d, d);
+      from.push(i, i);
+    } else {
+      out.push(u);
+      from.push(i);
+    }
+  });
+  return {out, from};
+};
+
 // 입력 중인 값(조합 중 글자 포함)을 목표와 비교
 export const check = (rawTarget: string, rawValue: string, lang: Lang): Check => {
   const target = norm(rawTarget, lang);
   const value = norm(rawValue, lang);
   const tu = units(target, lang);
   const vu = units(value, lang);
-  let same = 0;
-  while (same < vu.length && same < tu.length && vu[same] === tu[same]) same++;
-  const ok = same === vu.length;
+  const tx = expand(tu);
+  const vx = expand(vu).out;
+  let sameX = 0;
+  while (sameX < vx.length && sameX < tx.out.length && vx[sameX] === tx.out[sameX]) sameX++;
+  const ok = sameX === vx.length;
+  // 원래 단위로 몇 개를 다 맞혔는지 (쌍자음의 반만 친 상태면 그 단위는 아직)
+  const same = sameX === 0 ? 0 : sameX < tx.out.length && tx.from[sameX] === tx.from[sameX - 1] ? tx.from[sameX] : sameX < tx.out.length ? tx.from[sameX] : tu.length;
+  const half = sameX > 0 && sameX < tx.out.length && tx.from[sameX] === tx.from[sameX - 1];
   const chars = [...target];
   const vchars = [...value];
   const charStates = chars.map((c, i): Check['charStates'][number] => {
@@ -60,9 +85,10 @@ export const check = (rawTarget: string, rawValue: string, lang: Lang): Check =>
     // 조합 중인 마지막 글자: 자모가 목표의 앞부분이면 진행 중
     if (i === vchars.length - 1 && ok) return 'cur';
     // 한글 받침이 다음 글자로 넘어가기 전 (쇅 → 쇄골)
-    if (i === vchars.length - 1 && lang === 'ko' && units(chars.slice(i).join(''), lang).join('').startsWith(units(vchars[i], lang).join(''))) return 'cur';
+    if (i === vchars.length - 1 && lang === 'ko' && expand(units(chars.slice(i).join(''), lang)).out.join('').startsWith(expand(units(vchars[i], lang)).out.join(''))) return 'cur';
     return 'bad';
   });
-  const nextU = ok && same < tu.length ? tu[same] : null;
+  // 다음에 칠 키: 쌍자음을 반만 쳤으면 나머지 한 번 (같은 자음)
+  const nextU = !ok ? null : half ? tx.out[sameX] : same < tu.length ? tu[same] : null;
   return {ok, doneUnits: ok ? same : same, totalUnits: tu.length, nextKey: nextU ? keyFor(nextU) : null, charStates};
 };
