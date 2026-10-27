@@ -12,6 +12,9 @@ export type Bone = {
   region: string;
   model: ModelRef;
   sentence: {ko: string; en: string};
+  // 문장 문제로 뽑힌 것: sid = 문장 번호가 붙은 문제 이름(id 또는 id#k), nat = 우리말 문장
+  sid?: string;
+  nat?: string;
 };
 
 const r = (a: number, b: number, p: string) => Array.from({length: b - a + 1}, (_, i) => `${p}${a + i}`);

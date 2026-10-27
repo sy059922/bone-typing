@@ -5,20 +5,22 @@ import {BONES} from '../src/data/bones.ts';
 import {MUSCLES} from '../src/data/muscles.ts';
 import {NERVES} from '../src/data/nerves.ts';
 import {NATIVE_NAME, NATIVE_SENTENCE, toNative} from '../src/data/native.ts';
+import {MORE} from '../src/data/sentences.ts';
 import {units} from '../src/lib/typing.ts';
 
 const rows: string[] = [];
 for (const [cat, pool] of [['bone', BONES], ['muscle', MUSCLES], ['nerve', NERVES]] as const) {
   for (const b of pool) {
-    for (const kind of ['word', 'sentence'] as const) {
-      const variants: [string, string, string][] = [
-        ['en', '-', kind === 'word' ? b.en : b.sentence.en],
-        ['ko', 'hanja', kind === 'word' ? b.ko : b.sentence.ko],
-        ['ko', 'native', kind === 'word' ? NATIVE_NAME[b.id] ?? b.ko : NATIVE_SENTENCE[b.id] ?? toNative(b.sentence.ko)],
-      ];
+    // 낱말 1개 + 문장 여럿 (0번 = 원래 문장, k번 = 'id#k' — Game.tsx 의 withSentence 와 같은 이름)
+    const tasks: [string, string, [string, string, string][]][] = [
+      ['word', b.id, [['en', '-', b.en], ['ko', 'hanja', b.ko], ['ko', 'native', NATIVE_NAME[b.id] ?? b.ko]]],
+      ['sentence', b.id, [['en', '-', b.sentence.en], ['ko', 'hanja', b.sentence.ko], ['ko', 'native', NATIVE_SENTENCE[b.id] ?? toNative(b.sentence.ko)]]],
+      ...(MORE[b.id] ?? []).map((s, i): [string, string, [string, string, string][]] => ['sentence', `${b.id}#${i + 1}`, [['en', '-', s.en], ['ko', 'hanja', s.ko], ['ko', 'native', s.nat]]]),
+    ];
+    for (const [kind, item, variants] of tasks) {
       for (const [lang, term, text] of variants) {
         const u = units(text, lang as 'ko' | 'en').length + 1; // + 확정 키
-        rows.push(`('${cat}','${lang}','${kind}','${term}','${b.id}',${u})`);
+        rows.push(`('${cat}','${lang}','${kind}','${term}','${item}',${u})`);
       }
     }
   }

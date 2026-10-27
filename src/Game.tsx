@@ -3,6 +3,7 @@ import {BoneStage, type StageItem} from './components/BoneStage';
 import {Keyboard} from './components/Keyboard';
 import type {Bone} from './data/bones';
 import {NATIVE_NAME, NATIVE_SENTENCE, toNative} from './data/native';
+import {MORE} from './data/sentences';
 import {modeOf, type Category, type Kind, type Mode} from './lib/modes';
 import {getUi, t} from './lib/i18n';
 import {scoreOf} from './lib/ranking';
@@ -31,16 +32,33 @@ export const koName = (b: Bone, term: Term) => (term === 'native' ? NATIVE_NAME[
 const targetOf = (b: Bone, lang: Lang, kind: Kind, term: Term) => {
   if (lang === 'en') return kind === 'sentence' ? b.sentence.en : b.en;
   if (kind === 'word') return koName(b, term);
-  return term === 'native' ? NATIVE_SENTENCE[b.id] ?? toNative(b.sentence.ko) : b.sentence.ko;
+  return term === 'native' ? b.nat ?? NATIVE_SENTENCE[b.id] ?? toNative(b.sentence.ko) : b.sentence.ko;
+};
+
+// 구조 하나에 문장 여럿: 0번은 원래 문장(문제 이름 id), k번은 id#k (서버 round_items 와 같은 이름)
+const sentencesOf = (b: Bone) => [{...b.sentence, nat: NATIVE_SENTENCE[b.id]}, ...(MORE[b.id] ?? [])];
+const withSentence = (b: Bone, k: number): Bone => {
+  const all = sentencesOf(b);
+  const i = k < all.length ? k : 0;
+  const s = all[i];
+  return {...b, sentence: {ko: s.ko, en: s.en}, nat: s.nat, sid: i ? `${b.id}#${i}` : b.id};
+};
+const randomSentence = (b: Bone) => withSentence(b, Math.floor(Math.random() * sentencesOf(b).length));
+const fromKey = (pool: Bone[], key: string) => {
+  const [id, k] = key.split('#');
+  const b = pool.find((x) => x.id === id);
+  return b && withSentence(b, Number(k || 0));
 };
 
 // study: 학습 모드 — pool 전체를 섞어 내고, 틀린 답을 확정하면 다음 문제로. 틀린 문제는 회차가 끝나면 섞어서 다시 (다 맞힐 때까지)
 export const Game: React.FC<{cat: Category; pool: Bone[]; lang: Lang; kind: Kind; term: Term; blind: boolean; study?: boolean; order?: string[]; onFirstKey?: () => void; onDone: (r: Result) => void; onQuit: () => void}> = ({cat, pool, lang, kind, term, blind, study = false, order, onFirstKey, onDone, onQuit}) => {
   // 서버가 정해 준 문제 순서가 있으면 그대로 (랭킹 판정용), 없으면 무작위. 학습 모드는 틀린 문제를 뒤에 덧붙임
   const [queue, setQueue] = useState(() => {
-    if (study) return shuffle(pool);
-    const fromServer = order?.map((id) => pool.find((b) => b.id === id)).filter((b): b is Bone => !!b);
-    return fromServer && fromServer.length ? fromServer : shuffle(pool).slice(0, ROUND[kind]);
+    // 문장: 구조마다 여러 문장 가운데 하나 (학습 모드는 구조마다 한 문장씩 무작위, 틀리면 같은 문장이 다시)
+    const pick = (b: Bone) => (kind === 'sentence' ? randomSentence(b) : b);
+    if (study) return shuffle(pool).map(pick);
+    const fromServer = order?.map((key) => fromKey(pool, key)).filter((b): b is Bone => !!b);
+    return fromServer && fromServer.length ? fromServer : shuffle(pool).slice(0, ROUND[kind]).map(pick);
   });
   const missed = useRef<Bone[]>([]); // 이번 회차에 틀린 문제
   const solved = useRef(new Set<string>());
