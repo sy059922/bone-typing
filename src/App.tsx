@@ -3,6 +3,7 @@ import {BoneStage, IconStage, preloadModels} from './components/BoneStage';
 import {BONES} from './data/bones';
 import {MUSCLES} from './data/muscles';
 import {NERVES} from './data/nerves';
+import {MORE} from './data/sentences';
 import {modeLabel, modeOf, parseMode, type Category} from './lib/modes';
 import {setUi, t, useUi, type Ui} from './lib/i18n';
 import {Game, type Kind, type Result, type Term} from './Game';
@@ -482,6 +483,11 @@ export default function App() {
                     <small>{kind === 'word' ? t('blindSub') : t('blindWordOnly')}</small>
                   </span>
                 </button>
+                {kind === 'sentence' && (
+                  <div className="study-pick">
+                    {t('studyPick', {total: studyPool.reduce((s, b) => s + 1 + (MORE[b.id]?.length ?? 0), 0).toLocaleString(), n: studyPool.length})}
+                  </div>
+                )}
                 <button className="start" onClick={start}>
                   {t('studyStart', {n: studyPool.length})}
                 </button>

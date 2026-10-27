@@ -1173,6 +1173,15 @@ html.in-game body {
   color: var(--bg);
   font-weight: 700;
 }
+.study-pick {
+  font-size: 13px;
+  color: var(--sub);
+  padding-left: 4px;
+  word-break: keep-all;
+}
+.study-pick b {
+  color: var(--text);
+}
 .study-best {
   font-size: 13px;
   color: var(--sub);
@@ -1220,6 +1229,7 @@ html.in-game body {
   .title-panel.study > .parts {
     order: 3;
   }
+  .title-panel.study > .study-pick,
   .title-panel.study > .start {
     order: 4;
   }

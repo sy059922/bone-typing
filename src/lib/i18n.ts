@@ -114,6 +114,7 @@ const D = {
   studyParts: ['영역', 'Areas'],
   studyCount: ['{n}문제', '{n} items'],
   studyStart: ['학습 시작 · {n}문제', 'Start · {n} items'],
+  studyPick: ['전체 문장 {total}개 중 {n}개 출제 · 구조마다 한 문장씩 무작위', '{n} of {total} sentences · one random sentence per structure'],
   studyBest: ['이 기기 최고 기록', 'Best on this device'],
   studyNoBest: ['아직 기록이 없어요', 'No record yet'],
   studyRound: ['{n}회차', 'Round {n}'],
