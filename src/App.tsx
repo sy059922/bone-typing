@@ -568,6 +568,7 @@ export default function App() {
         ) : null}
         <div className="credit">
           {t('credit')} · made by <a className="credit-link" href="https://www.instagram.com/iamnotwoodz/" target="_blank" rel="noopener noreferrer" onClick={() => logClick('follow_title')}>@iamnotwoodz</a>
+          {' · '}<a className="credit-link" href="https://github.com/sy059922/bone-typing" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
       </div>
     </div>
