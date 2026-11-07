@@ -1263,3 +1263,110 @@ html.in-game body {
 .seg.three {
   grid-template-columns: 1fr 1fr 1fr;
 }
+
+/* ── 아이폰 Duo 반쯤 접기 (앱에서만 class 가 붙음 · --fold-a/b = 접힘 줄) */
+/* 노트북 자세: 위 화면엔 3D 뼈와 점수, 아래 화면엔 낱말·입력 (화면 키보드가 뜨면 원래 배치) */
+html.fold-laptop:not(.kb-open) .game {
+  display: grid;
+  grid-template-rows: var(--fold-a) calc(var(--fold-b) - var(--fold-a)) auto auto minmax(0, 1fr);
+  padding-top: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+html.fold-laptop:not(.kb-open) .game > .hud {
+  grid-row: 1;
+  align-self: start;
+  z-index: 1;
+  padding-top: calc(env(safe-area-inset-top) + 10px);
+}
+html.fold-laptop:not(.kb-open) .game > .progress {
+  grid-row: 1;
+  align-self: end;
+  z-index: 1;
+}
+html.fold-laptop:not(.kb-open) .game > .stage {
+  grid-row: 1;
+  min-height: 0;
+}
+html.fold-laptop:not(.kb-open) .game > .line {
+  grid-row: 3;
+  margin-top: 24px;
+}
+html.fold-laptop:not(.kb-open) .game > .hint {
+  grid-row: 4;
+}
+html.fold-laptop:not(.kb-open) .game > .kb {
+  grid-row: 5;
+}
+/* 책 자세: 왼쪽 화면엔 3D 뼈, 오른쪽 화면엔 점수·낱말·입력 */
+html.fold-book .game {
+  display: grid;
+  grid-template-columns: var(--fold-a) calc(var(--fold-b) - var(--fold-a)) minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  padding-left: 0;
+  padding-right: env(safe-area-inset-right);
+}
+html.fold-book .game > .stage {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  min-height: 0;
+}
+html.fold-book .game > :not(.stage) {
+  grid-column: 3;
+}
+html.fold-book .game > .hud {
+  grid-row: 1;
+}
+html.fold-book .game > .progress {
+  grid-row: 2;
+}
+html.fold-book .game > .line {
+  grid-row: 3;
+  align-self: center;
+  max-width: 100%;
+}
+html.fold-book .game > .hint {
+  grid-row: 4;
+  flex-wrap: wrap;
+}
+html.fold-book .game > .kb {
+  display: none;
+}
+/* 타이틀: 책 자세면 왼쪽 3D · 오른쪽 메뉴, 노트북 자세면 위 3D · 아래 메뉴 */
+html.fold-book .title {
+  display: grid;
+  height: 100%;
+  grid-template-columns: var(--fold-a) calc(var(--fold-b) - var(--fold-a)) minmax(0, 1fr);
+  grid-template-rows: 100%;
+}
+html.fold-book .title > .title-stage {
+  grid-column: 1;
+  height: 100%;
+}
+html.fold-book .title > .title-panel {
+  grid-column: 3;
+  overflow-y: auto;
+  padding-right: calc(20px + env(safe-area-inset-right));
+}
+html.fold-laptop .title {
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: var(--fold-a) calc(var(--fold-b) - var(--fold-a)) minmax(0, 1fr);
+  height: 100%;
+}
+html.fold-laptop .title > .title-stage {
+  grid-row: 1;
+  height: 100%;
+}
+html.fold-laptop .title > .title-panel {
+  grid-row: 3;
+  overflow-y: auto;
+  border-left: 0;
+}
+
+/* 옆쪽 안전 영역 (아이폰 Duo 바깥 화면은 상태 표시줄·카메라가 오른쪽 세로줄) */
+@media (max-width: 640px), (pointer: coarse) and (max-width: 1024px) {
+  .title-panel {
+    padding-left: calc(20px + env(safe-area-inset-left));
+    padding-right: calc(20px + env(safe-area-inset-right));
+  }
+}

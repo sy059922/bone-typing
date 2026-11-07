@@ -7,6 +7,7 @@ import './index.css'
 import App from './App.tsx'
 import {Analytics} from '@vercel/analytics/react'
 import {renderDemo, renderTrack} from './lib/sound'
+import {watchFold} from './lib/native'
 
 // 개발용: 소리 미리듣기 WAV 생성기
 if (import.meta.env.DEV) Object.assign(window, {renderDemo, renderTrack})
@@ -17,8 +18,11 @@ const syncHeight = () => {
   document.documentElement.style.setProperty('--app-h', `${Math.round(vv ? vv.height : window.innerHeight)}px`);
   // 게임 중에만: 화면 키보드 때문에 페이지가 밀리면 원위치 (타이틀 화면은 자유롭게 스크롤)
   if (vv && vv.offsetTop > 0 && document.documentElement.classList.contains('in-game')) window.scrollTo(0, 0);
+  // 화면 키보드가 떠 있음 — 접힌 아이폰 Duo 배치는 키보드가 없을 때만
+  document.documentElement.classList.toggle('kb-open', !!vv && vv.height < window.innerHeight - 120);
 };
 syncHeight();
+watchFold();
 vv?.addEventListener('resize', syncHeight);
 vv?.addEventListener('scroll', syncHeight);
 window.addEventListener('resize', syncHeight);
