@@ -2,6 +2,7 @@
 // 배경음: 132BPM 칩튠 루프 (펄스파 멜로디 · 삼각파 베이스 · 노이즈 드럼), Am–F–C–G
 // 학습 모드 곡: 76BPM 로파이 (Fmaj7–Em7–Dm7–Cmaj7, 부드러운 패드 · 전자 피아노 · 스윙 하이햇 · 레코드 잡음) — 집중용으로 멜로디는 아주 드물게
 // 효과음: 키 타격(펄스 블립 + 노이즈 클릭 + 저음 쿵), 오타(내려가는 버즈), 낱말 성공(올라가는 아르페지오), 결과 팡파르
+import {buzz} from './native';
 
 let ctx: BaseAudioContext | null = null;
 let master: GainNode, bgmBus: GainNode, sfxBus: GainNode;
@@ -127,6 +128,7 @@ export function sfxBackspace(at?: number) {
 
 // 오타: 낮게 떨어지는 '뿌-웅' 버즈 두 번
 export function sfxBad(at?: number) {
+  if (at === undefined) buzz('medium'); // 앱에서만 진동 (소리 꺼도 진동은 따로)
   if (!ctx || !prefs.sfx) return;
   const t = at ?? ctx.currentTime;
   tone({wave: 'p50', f0: 220, f1: 110, t, dur: 0.12, vol: 0.32, bus: sfxBus});
@@ -136,6 +138,7 @@ export function sfxBad(at?: number) {
 
 // 패스: 낮게 미끄러지는 '휘익'
 export function sfxPass(at?: number) {
+  if (at === undefined) buzz('light'); // 앱에서만 진동 (소리 꺼도 진동은 따로)
   if (!ctx || !prefs.sfx) return;
   const t = at ?? ctx.currentTime;
   tone({wave: 'p25', f0: 660, f1: 165, t, dur: 0.28, vol: 0.2, bus: sfxBus});
@@ -144,6 +147,7 @@ export function sfxPass(at?: number) {
 
 // 낱말 성공: 콤보가 높을수록 높은 음에서 시작하는 아르페지오 + '챙'
 export function sfxWord(combo = 0, at?: number) {
+  if (at === undefined) buzz('light'); // 앱에서만 진동 (소리 꺼도 진동은 따로)
   if (!ctx || !prefs.sfx) return;
   const t = at ?? ctx.currentTime;
   const root = 72 + Math.min(combo, 12);
@@ -157,6 +161,7 @@ export function sfxWord(combo = 0, at?: number) {
 
 // 결과 팡파르
 export function sfxFinish(at?: number) {
+  if (at === undefined) buzz('success'); // 앱에서만 진동 (소리 꺼도 진동은 따로)
   if (!ctx || !prefs.sfx) return;
   const t = (at ?? ctx.currentTime) + 0.05;
   const seq: [number, number, number][] = [

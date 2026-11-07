@@ -1,6 +1,7 @@
 import type {Result} from '../Game';
 import {modeShort, parseMode} from './modes';
 import {getUi} from './i18n';
+import {appShare, appShareImage, isApp} from './native';
 
 export const SITE = 'https://bone-typing.vercel.app';
 
@@ -74,12 +75,15 @@ export async function resultCard(r: Result, nick: string, rank: number | null): 
   return new Promise((res) => c.toBlob((b) => res(b!), 'image/png'));
 }
 
-export const canSystemShare = () => typeof navigator.share === 'function';
+export const canSystemShare = () => isApp() || typeof navigator.share === 'function';
 
 // 시스템 공유창 (폰: 카카오톡·인스타·메시지 … / 맥: 메시지·AirDrop …) — 링크를 보내면 받는 쪽에 내 기록 썸네일이 뜸
 export async function systemShare(r: Result, nick: string, rank: number | null, id: number | null): Promise<'shared' | 'cancelled' | 'failed'> {
+  const msg = {title: getUi() === 'en' ? `${nick} · ${r.score} pts · Bone Typing` : `${nick}님 ${r.score}점 · 뼈쟁이 타자연습`, text: shareText(r, nick, rank, null).split('\n').slice(0, 2).join('\n'), url: shareUrl(id)};
+  const app = await appShare(msg);
+  if (app) return app;
   try {
-    await navigator.share({title: getUi() === 'en' ? `${nick} · ${r.score} pts · Bone Typing` : `${nick}님 ${r.score}점 · 뼈쟁이 타자연습`, text: shareText(r, nick, rank, null).split('\n').slice(0, 2).join('\n'), url: shareUrl(id)});
+    await navigator.share(msg);
     return 'shared';
   } catch (e) {
     return (e as DOMException).name === 'AbortError' ? 'cancelled' : 'failed';
@@ -97,6 +101,7 @@ export async function copyResult(r: Result, nick: string, rank: number | null, i
 
 export async function downloadCard(r: Result, nick: string, rank: number | null) {
   const blob = await resultCard(r, nick, rank);
+  if (await appShareImage(blob, 'bone-typing-result.png')) return; // 앱: 저장 대신 공유창 (사진에 저장 포함)
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'bone-typing-result.png';
