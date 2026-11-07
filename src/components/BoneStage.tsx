@@ -96,7 +96,7 @@ const Mover: React.FC<{slot: Slot; bad: number; children: React.ReactNode}> = ({
 };
 
 const Model: React.FC<{model: ModelRef; bad: boolean; dim: boolean}> = ({model, bad, dim}) => {
-  const {scene} = useGLTF(`/models/${model.file}.glb`, false, true);
+  const {scene} = useGLTF(`${import.meta.env.BASE_URL}models/${model.file}.glb`, false, true);
   const isNerve = model.file.startsWith('nerve');
   // 근육·신경: 강조할 것 기준으로 확대하고 맥락 뼈는 흐린 뼈색
   const isMuscle = model.file.startsWith('muscle') || isNerve;
@@ -299,7 +299,7 @@ export const BoneStage: React.FC<{items: StageItem[]; bad: boolean; bursts: numb
   </Canvas>
 );
 
-export const preloadModels = (files: string[]) => files.forEach((f) => useGLTF.preload(`/models/${f}.glb`, false, true));
+export const preloadModels = (files: string[]) => files.forEach((f) => useGLTF.preload(`${import.meta.env.BASE_URL}models/${f}.glb`, false, true));
 
 // 앱 아이콘 렌더용 (?icon): 손뼈를 손가락이 위로 오게 세워 살짝 기울임 — '안녕' 하고 흔드는 손
 export const IconStage: React.FC<{model: ModelRef}> = ({model}) => (

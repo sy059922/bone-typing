@@ -1,5 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+// 글꼴은 직접 담아 둠 (Google Fonts 없이 오프라인에서도 같은 모양)
+import '@fontsource-variable/noto-sans-kr'
+import '@fontsource-variable/jetbrains-mono'
 import './index.css'
 import App from './App.tsx'
 import {Analytics} from '@vercel/analytics/react'
@@ -23,6 +26,6 @@ window.addEventListener('resize', syncHeight);
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
-    <Analytics />
+    {import.meta.env.VITE_APP ? null : <Analytics />}
   </StrictMode>,
 )

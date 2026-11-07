@@ -28,8 +28,8 @@ export async function resultCard(r: Result, nick: string, rank: number | null): 
   g.strokeStyle = 'rgba(255,255,255,0.04)';
   for (let x = 0; x < W; x += 60) g.strokeRect(x, 0, 0, H);
   for (let y = 0; y < H; y += 60) g.strokeRect(0, y, W, 0);
-  const sans = "'Noto Sans KR', sans-serif";
-  const mono = "'JetBrains Mono', monospace";
+  const sans = "'Noto Sans KR Variable', 'Noto Sans KR', sans-serif";
+  const mono = "'JetBrains Mono Variable', 'JetBrains Mono', monospace";
   g.fillStyle = '#5C5C5C';
   g.font = `400 30px ${mono}`;
   g.fillText('BONE NAME TYPING', 90, 140);

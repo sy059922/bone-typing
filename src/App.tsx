@@ -27,6 +27,17 @@ const readNick = () => {
 const Board: React.FC<{mode: Mode; me?: string; refresh: number}> = ({mode, me, refresh}) => {
   const [rows, setRows] = useState<Score[] | null>(null);
   const [err, setErr] = useState(false);
+  // 온라인·오프라인이 바뀌면 랭킹판을 다시 읽음 (전체 ↔ 이 기기)
+  const [net, setNet] = useState(0);
+  useEffect(() => {
+    const bump = () => setNet((x) => x + 1);
+    window.addEventListener('online', bump);
+    window.addEventListener('offline', bump);
+    return () => {
+      window.removeEventListener('online', bump);
+      window.removeEventListener('offline', bump);
+    };
+  }, []);
   useEffect(() => {
     let alive = true;
     setRows(null);
@@ -37,7 +48,7 @@ const Board: React.FC<{mode: Mode; me?: string; refresh: number}> = ({mode, me, 
     return () => {
       alive = false;
     };
-  }, [mode, refresh]);
+  }, [mode, refresh, net]);
   return (
     <div className="board">
       <div className="board-head">
@@ -392,6 +403,12 @@ export default function App() {
       <div className={`title-panel ${study ? 'study' : ''}`}>
         {screen === 'title' ? (
           <>
+            {/* 뼈쟁이 앱 안에서만: 게임 고르는 첫 화면으로 */}
+            {import.meta.env.VITE_APP ? (
+              <a className="app-home" href="/">
+                ‹ {t('appHome')}
+              </a>
+            ) : null}
             {/* 화면 언어 */}
             <div className="ui-lang" role="group" aria-label="Language">
               {(['ko', 'en'] as Ui[]).map((u) => (

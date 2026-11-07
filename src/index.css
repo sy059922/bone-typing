@@ -10,8 +10,8 @@
   --dim: #5c5c5c;
   --white: #ffffff;
   --bad: #e5484d;
-  --sans: 'Noto Sans KR', system-ui, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --sans: 'Noto Sans KR Variable', 'Noto Sans KR', system-ui, sans-serif;
+  --mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
   color-scheme: dark;
 }
 
@@ -266,6 +266,8 @@ button {
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  /* 노치·홈 막대 피하기 (앱·홈 화면에 추가한 웹앱. 일반 브라우저에선 0) */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 .hud {
   display: grid;
@@ -1112,6 +1114,17 @@ html.in-game body {
 .ui-lang button.on {
   background: var(--text);
   color: var(--bg);
+}
+
+.app-home {
+  align-self: flex-start;
+  margin-top: -6px;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: var(--dim);
+  text-decoration: none;
 }
 
 /* 학습 모드 */

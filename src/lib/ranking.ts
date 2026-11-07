@@ -7,9 +7,13 @@ export type Score = {nickname: string; mode: Mode; score: number; cpm: number; a
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-const sb: SupabaseClient | null = URL && KEY ? createClient(URL, KEY, {auth: {persistSession: false}}) : null;
+// 느린 망에서 무한정 기다리지 않게 8초 제한 (앱 오프라인 플레이)
+const timedFetch: typeof fetch = (input, init) => fetch(input, {...init, signal: init?.signal ?? AbortSignal.timeout(8000)});
+const sb: SupabaseClient | null = URL && KEY ? createClient(URL, KEY, {auth: {persistSession: false}, global: {fetch: timedFetch}}) : null;
 
-export const isShared = () => sb !== null;
+// 오프라인이면 서버 대신 이 기기에 저장·표시
+const online = () => typeof navigator === 'undefined' || navigator.onLine !== false;
+export const isShared = () => sb !== null && online();
 
 const LOCAL = 'bone-typing:scores';
 const readLocal = (): Score[] => {
@@ -46,7 +50,7 @@ export const parseCode = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, ''
 
 export type NickState = 'free' | 'mine' | 'taken' | 'local';
 export async function checkNickname(nick: string, token: string | null): Promise<NickState> {
-  if (!sb) return 'local';
+  if (!sb || !isShared()) return 'local';
   const {data, error} = await sb.rpc('check_nickname', {p_nickname: nick, p_token: token});
   if (error) throw error;
   return data as NickState;
@@ -58,7 +62,7 @@ export const scoreOf = (cpm: number, accuracy: number) => Math.round(cpm * Math.
 // ── 서버 판정 (2026-10-25): 서버가 판과 문제를 정하고, 첫 타~제출을 서버 시계로 재서 점수를 계산
 export type Round = {round: string; items: string[]};
 export async function startRound(mode: Mode, term: string): Promise<Round | null> {
-  if (!sb) return null;
+  if (!sb || !isShared()) return null;
   const {data, error} = await sb.rpc('start_round', {p_mode: mode, p_term: term});
   if (error) throw error;
   return data as Round;
@@ -70,7 +74,7 @@ export type Saved = {id: number; cpm: number; accuracy: number; score: number; s
 
 // 서버 판정으로 저장 → 서버가 계산한 값 / 이 기기 저장이면 null
 export async function submitScore(s: Score, token: string | null, round: string | null, errors: number): Promise<Saved | null> {
-  if (sb && round) {
+  if (sb && round && isShared()) {
     const {data, error} = await sb.rpc('submit_score', {p_round: round, p_nickname: s.nickname, p_token: token, p_errors: errors});
     if (error) throw error;
     const d = data as Saved;
@@ -93,14 +97,14 @@ export const logClick = (kind: ClickKind) => {
 
 // 공유받은 기록 하나 (도전 문구용)
 export async function getShared(id: number): Promise<(Score & {rank: number}) | null> {
-  if (!sb) return null;
+  if (!sb || !isShared()) return null;
   const {data} = await sb.rpc('get_score', {p_id: id});
   const row = (data as (Score & {rank: number})[] | null)?.[0];
   return row ? {...row, accuracy: Number(row.accuracy), rank: Number(row.rank)} : null;
 }
 
 export async function topScores(mode: Mode, limit = 20): Promise<Score[]> {
-  if (sb) {
+  if (sb && isShared()) {
     const {data, error} = await sb.from('leaderboard').select('*').eq('mode', mode).order('score', {ascending: false}).limit(limit);
     if (error) throw error;
     return (data ?? []) as Score[];

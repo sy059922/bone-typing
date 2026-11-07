@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from 'react';
 import type {Result} from '../Game';
 import {modeLabel} from '../lib/modes';
 import {t} from '../lib/i18n';
-import {logClick} from '../lib/ranking';
+import {isShared, logClick} from '../lib/ranking';
 import {canSystemShare, copyResult, downloadCard, systemShare} from '../lib/share';
 import {formatTime} from '../lib/study';
 
@@ -108,9 +108,9 @@ export const ResultModal: React.FC<{
         <div className="modal-rank">
           {saved === 'saving' ? t('saving') : saved === 'fail' ? failReason || t('saveFail') : result.review ? t('review') : rank ? (
             <>
-              {t('rankPre')}
+              {isShared() ? t('rankPre') : t('rankPreLocal')}
               <b>{rank}</b>
-              {t('rankPost')}
+              {isShared() ? t('rankPost') : t('rankPostLocal')}
             </>
           ) : (
             t('savedOk')
